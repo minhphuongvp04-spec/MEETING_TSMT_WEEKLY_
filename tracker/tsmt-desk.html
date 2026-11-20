@@ -1,0 +1,807 @@
+<title>TSMT Project Desk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Layout: fixed left rail of modules + scrolling work area; today board = two columns (actions | next 7 days) */
+:root{
+  --bg:#EEF1F4; --surface:#FFFFFF; --sunk:#F6F8FA; --ink:#15202B; --muted:#5A6774; --line:#D8DFE6;
+  --accent:#1F56C3; --accent-soft:#E3EBFA; --ok:#1C7F47; --ok-soft:#E1F2E8; --warn:#A86A0C; --warn-soft:#FBF0DC;
+  --bad:#BD2D2D; --bad-soft:#FBE5E3; --info:#4A5A6B; --info-soft:#E9EDF1;
+  --f-body:"IBM Plex Sans","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-head:"IBM Plex Sans Condensed","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E141A; --surface:#161F28; --sunk:#121A22; --ink:#E4EAF0; --muted:#93A2B1; --line:#27333F;
+  --accent:#7FA6FF; --accent-soft:#1C2A45; --ok:#5CC48A; --ok-soft:#14301F; --warn:#E3A945; --warn-soft:#352812;
+  --bad:#F07A72; --bad-soft:#3A1A19; --info:#A9B6C3; --info-soft:#1E2833; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E141A; --surface:#161F28; --sunk:#121A22; --ink:#E4EAF0; --muted:#93A2B1; --line:#27333F;
+  --accent:#7FA6FF; --accent-soft:#1C2A45; --ok:#5CC48A; --ok-soft:#14301F; --warn:#E3A945; --warn-soft:#352812;
+  --bad:#F07A72; --bad-soft:#3A1A19; --info:#A9B6C3; --info-soft:#1E2833; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.app{display:grid;grid-template-columns:220px minmax(0,1fr);gap:24px;min-height:100vh;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px}
+.side{position:sticky;top:20px;align-self:start;display:flex;flex-direction:column;gap:18px}
+.brand h1{font-family:var(--f-head);font-size:21px;font-weight:700;margin:0;letter-spacing:.01em}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:6px;color:var(--ink);text-decoration:none;font-weight:500}
+.nav a:hover{background:var(--surface)}
+.nav a.on{background:var(--ink);color:var(--bg)}
+.nav .cnt{font-family:var(--f-mono);font-size:11px;padding:1px 6px;border-radius:9px;background:var(--bad);color:#fff}
+.nav a.on .cnt{background:var(--bad)}
+.sidefoot{display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;background:var(--surface);color:var(--muted);padding:5px 10px;font:inherit;cursor:pointer}
+.seg button.on{background:var(--accent);color:#fff}
+main{min-width:0;display:flex;flex-direction:column;gap:18px}
+.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px}
+.top h2{font-family:var(--f-head);font-size:28px;font-weight:600;margin:0;text-wrap:balance}
+.top .meta{color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;min-width:0}
+.card h3{font-family:var(--f-head);font-size:16px;font-weight:600;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.card h3 .n{font-family:var(--f-mono);font-size:12px;color:var(--muted);font-weight:400}
+.cols{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:18px;min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.kpi .v{font-family:var(--f-mono);font-size:24px;font-weight:500;font-variant-numeric:tabular-nums}
+.kpi .l{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.kpi.bad .v{color:var(--bad)} .kpi.warn .v{color:var(--warn)} .kpi.ok .v{color:var(--ok)}
+.items{display:flex;flex-direction:column}
+.item{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:10px;padding:9px 0;border-top:1px solid var(--line);align-items:start;cursor:pointer}
+.item:first-child{border-top:0}
+.item:hover .it{text-decoration:underline}
+.dot{width:9px;height:9px;border-radius:50%;margin-top:5px;background:var(--info)}
+.dot.bad{background:var(--bad)} .dot.warn{background:var(--warn)} .dot.ok{background:var(--ok)}
+.it{font-weight:500} .is{color:var(--muted);font-size:12.5px}
+.tag{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.empty{color:var(--muted);padding:8px 0}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--info-soft);color:var(--info);white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.acc{background:var(--accent-soft);color:var(--accent)}
+.btn{font:inherit;font-weight:500;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:6px 12px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.sm{padding:3px 9px;font-size:12.5px}
+.btn:focus-visible,.nav a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.chipf{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:14px;padding:4px 11px;font:inherit;font-size:12.5px;cursor:pointer}
+.chipf.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.ship{display:flex;flex-direction:column;gap:10px}
+.shead{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:flex-start}
+.stitle{font-family:var(--f-head);font-size:17px;font-weight:600}
+.route{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px 16px;font-size:13px}
+.facts div span{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.facts b{font-weight:500;font-variant-numeric:tabular-nums}
+.late{color:var(--bad);font-weight:600}
+.steps{display:flex;gap:0;overflow-x:auto;padding-bottom:2px}
+.st{flex:1 1 0;min-width:78px;display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted)}
+.st i{display:block;height:5px;background:var(--line);margin-right:3px;border-radius:2px}
+.st.done i{background:var(--ok)} .st.cur i{background:var(--accent)} .st.cur{color:var(--ink);font-weight:600}
+.blk{display:flex;flex-wrap:wrap;gap:6px}
+.log{border-left:2px solid var(--line);padding-left:12px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.log .d{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);margin-right:8px}
+.latest{background:var(--sunk);border-radius:6px;padding:8px 10px;font-size:13px}
+.latest .d{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);margin-right:8px}
+.tw{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n,th.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.hold td{background:var(--warn-soft)}
+.secrow td{background:var(--sunk);font-weight:600}
+.grid{font-size:12px}
+.grid th,.grid td{padding:4px 6px;text-align:right;font-family:var(--f-mono);white-space:nowrap;border-bottom:1px solid var(--line)}
+.grid th.sl,.grid td.sl{position:sticky;left:0;background:var(--surface);text-align:left;font-family:var(--f-body);z-index:1;min-width:150px}
+.grid td.off{background:var(--sunk);color:var(--muted)}
+.grid th.today,.grid td.today{box-shadow:inset 2px 0 0 var(--accent),inset -2px 0 0 var(--accent)}
+.grid tr.act td{color:var(--ink)} .grid tr.pl td{color:var(--muted)}
+.grid td.under{color:var(--bad);font-weight:500} .grid td.over{color:var(--ok);font-weight:500}
+.grid input{width:52px;font:inherit;text-align:right;border:1px solid var(--line);border-radius:3px;background:var(--surface);color:var(--ink);padding:1px 3px}
+.grid .hl{font-size:10px;color:var(--warn);font-family:var(--f-body)}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;min-width:60px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.bar.ok i{background:var(--ok)}
+.sugg{border-left:3px solid var(--warn);background:var(--warn-soft);padding:10px 14px;border-radius:0 6px 6px 0;display:flex;flex-direction:column;gap:4px}
+.sugg.ok{border-color:var(--ok);background:var(--ok-soft)}
+.agenda{display:flex;flex-direction:column;gap:12px}
+.aday b{font-family:var(--f-head);font-weight:600;font-size:13px;display:block;margin-bottom:4px}
+.aday b.td{color:var(--accent)}
+.aday ul{margin:0;padding-left:16px;font-size:13px;color:var(--ink)} .aday li{margin:2px 0}
+.aday .none{color:var(--muted);font-size:12.5px}
+.banner{padding:10px 14px;border-radius:6px;background:var(--info-soft);color:var(--info)}
+.banner.bad{background:var(--bad-soft);color:var(--bad)}
+.issue{display:flex;flex-direction:column;gap:8px}
+.ihead{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
+.it2{font-weight:600;font-size:15px}
+.muted{color:var(--muted)} .mono{font-family:var(--f-mono)}
+.modal-bg{position:fixed;inset:0;background:rgba(10,16,24,.45);display:flex;align-items:flex-start;justify-content:center;padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));z-index:50;overflow-y:auto}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:10px;width:min(760px,100%);padding:18px;display:flex;flex-direction:column;gap:14px}
+.modal h4{font-family:var(--f-head);font-size:19px;margin:0}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 14px}
+.fgrid label,.fl{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);min-width:0}
+.fgrid .wide{grid-column:1/-1}
+input,select,textarea{font:inherit;font-size:13.5px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 8px;min-width:0;width:100%}
+textarea{min-height:74px;resize:vertical}
+.mact{display:flex;justify-content:flex-end;gap:8px}
+.err{color:var(--bad);font-size:13px}
+.stbl input{padding:4px 6px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs button{border:0;background:none;font:inherit;font-weight:500;color:var(--muted);padding:8px 12px;border-bottom:2px solid transparent;cursor:pointer}
+.tabs button.on{color:var(--ink);border-color:var(--accent)}
+.grp{font-family:var(--f-head);font-size:15px;font-weight:600;margin:4px 0 -6px;color:var(--muted)}
+.toast{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:6px;z-index:60}
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr);gap:14px}
+  .side{position:static}
+  .nav{flex-direction:row;overflow-x:auto;gap:4px;padding-bottom:4px}
+  .nav a{white-space:nowrap}
+  .cols{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand"><h1 id="appName">TSMT Project Desk</h1><p id="appSub">AVC EMS · India</p></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidefoot">
+      <div class="seg" id="langSeg"><button data-a="lang" data-v="en">English</button><button data-a="lang" data-v="zh">中文</button></div>
+      <div id="roleNote"></div>
+    </div>
+  </aside>
+  <main id="main"><div class="banner">Loading…</div></main>
+</div>
+<div id="modalRoot"></div>
+
+<script>
+window.addEventListener('error',function(e){var m=document.getElementById('main');if(m)m.innerHTML='<div class="banner bad">Page error: '+String(e.message||e).replace(/</g,'&lt;')+(e.lineno?' (line '+e.lineno+')':'')+'</div>'});
+</script>
+<script>
+(()=>{
+/* ---------- constants ---------- */
+const STEPS=['po','ready','docs','booking','shipped','arrived','customs','delivered'];
+const OB_STEPS=['production','fg','packing','booking','shipped','delivered'];
+const CATS=['material','equipment','sample','return','fg','other'];
+const BLOCKERS=['docs','confirm','approval','license','customs','payment','other'];
+const PROCESS=['SMT','DIP','BLT','Assembly','Testing','Packing','General'];
+const ISSUE_CATS=['shipment','material','production','quality','equipment','docs','other'];
+const VIEWS=['today','shipments','materials','outbound','production','dpr','issues','report'];
+
+const L={en:{
+nav_today:'Today',nav_shipments:'Shipments',nav_materials:'Materials to TSMT',nav_outbound:'Customer shipments',nav_production:'Production & quality',nav_dpr:'Production plan',nav_issues:'Open issues',nav_report:'Monthly summary',
+owner:'You are the owner. Editing is on.',viewer:'View only. Updates are made by the project owner.',
+loading:'Loading data…',noDb:'Data can’t be reached in this view. Open the page on claude.ai while signed in.',timeout:'Still waiting for data. What you see may be out of date.',
+g_confirm:'Confirm today',g_due:'Due and overdue',g_prepare:'Prepare',g_next7:'Next 7 days',g_todos:'My to-dos',nothing:'Nothing here.',
+k_action:'Need action',k_overdue:'Overdue',k_moving:'Shipments moving',k_open:'Open issues',
+a_etdPassed:'ETD {d} passed. Confirm the lot has left.',a_etdSoon:'ETD {d}. Confirm booking and departure.',a_etaPassed:'ETA {d} passed. Confirm arrival.',a_etaSoon:'ETA {d}. Confirm arrival and customs.',
+a_stale:'No update for {n} days',a_blocker:'Blocker · {g}: {x} (open {n} days)',a_readyPassed:'Ready date {d} passed. Check with ARC.',a_readySoon:'Ready at ARC on {d}. Tell TSMT the plan.',a_alert:'Flagged as {x}',
+a_obPassed:'Planned ship date {d} passed. Confirm status.',a_obSoon:'Customer shipment on {d}. Confirm readiness.',a_overdue:'Overdue since {d} ({n} days)',a_dueSoon:'Due {d}',a_noDue:'No due date set',a_todo:'To-do due {d}',
+a_qa:'QA reports today: {n} of 2 shifts received',a_qaY:'No QA report for yesterday ({d})',a_dprShort:'Forecast {n} pcs short of {q} by {d}',a_meeting:'Weekly meeting {d}: {n} open issues, {m} not updated since last meeting',
+e_etd:'ETD',e_eta:'ETA',e_ready:'Ready at ARC',e_ship:'Ship to customer',e_due:'Due',e_ms:'Ship milestone',e_hol:'Non-working',e_meet:'Weekly meeting',
+s_po:'PO created',s_ready:'Goods ready',s_docs:'Invoice / PKL',s_booking:'Booking',s_shipped:'Shipped (ETD)',s_arrived:'Arrived (ETA)',s_customs:'Customs cleared',s_delivered:'Delivered',
+o_production:'In production',o_fg:'FG ready',o_packing:'Packed',o_booking:'Booked',o_shipped:'Shipped',o_delivered:'Customer received',
+c_material:'Material',c_equipment:'Machine / fixture',c_sample:'Sample',c_return:'Return',c_fg:'Finished goods',c_other:'Other',
+b_docs:'Documents',b_confirm:'Waiting confirmation',b_approval:'PR / PO approval',b_license:'License / permit',b_customs:'Customs',b_payment:'Cost / payment',b_other:'Other',
+m_waiting:'Waiting supplier',m_ready:'Ready at ARC',m_shipped:'Shipped',m_arrived:'Arrived TSMT',m_short:'Short',m_late:'Late',
+f_all:'All',f_active:'Active',f_done:'Completed',
+l_route:'Route',l_terms:'Terms',l_cost:'Cost borne by',l_po:'PO',l_inv:'Invoice',l_qty:'Qty',l_owner:'Owner',l_etd:'ETD',l_eta:'ETA',l_plan:'plan',l_act:'actual',l_ready:'Ready at ARC',l_mode:'Mode',l_process:'For process',l_lot:'Lot',l_project:'Project',l_cat:'Type',l_alert:'Flag',
+l_latest:'Latest update',l_history:'History',l_blockers:'Blockers',l_lastupd:'Last update',l_delay:'Delay',days:'days',l_customer:'Customer',l_model:'Model / SKU',l_shipPlan:'Planned ship',l_shipAct:'Actual ship',l_dest:'Destination',l_issue:'Issue',
+btn_add:'Add',btn_edit:'Edit',btn_update:'Add update',btn_blocker:'Add blocker',btn_next:'Next step',btn_save:'Save',btn_cancel:'Cancel',btn_delete:'Delete',btn_resolve:'Resolve',btn_close:'Close issue',btn_reopen:'Reopen',btn_more:'Show history',btn_less:'Hide history',btn_newplan:'New lot plan',btn_settings:'Plan settings',btn_addReport:'Add QA report',btn_allDates:'All dates',btn_window:'Around today',btn_baseline:'Show generated plan',
+new_ship:'New shipment',new_ob:'New customer shipment',new_issue:'New issue',upd:'Update',
+pr_high:'High',pr_med:'Medium',pr_low:'Low',st_open:'Open',st_progress:'In progress',st_closed:'Closed',
+ic_shipment:'Shipment',ic_material:'Material',ic_production:'Production',ic_quality:'Quality',ic_equipment:'Equipment',ic_docs:'Documents',ic_other:'Other',
+l_due:'Due',l_opened:'Opened',l_closed:'Closed',l_reason:'Close reason / result',l_prio:'Priority',l_status:'Status',l_topic:'Topic',l_owners:'Owners',l_cat2:'Category',l_text:'Update text',l_date:'Date',
+m_lotsum:'Material lots by status',
+pq_report:'QA report',pq_shift:'Shift',pq_by:'Reported by',pq_station:'Test station',pq_part:'Part no.',pq_input:'Input',pq_p1:'1A pass',pq_f1:'1A fail',pq_p2:'2A pass',pq_f2:'2A fail',pq_y1:'1A yield',pq_y2:'2A yield',pq_rt:'Retest',pq_rw:'Rework done',pq_ntf:'NTF',pq_note:'Fail details',pq_stage:'DPR stage',
+pq_vs:'Against the production plan',pq_qaIn:'QA input (cum.)',pq_dprAct:'DPR actual (cum.)',pq_planCum:'Plan (cum.)',pq_lot:'% of lot',pq_hist:'Report history',pq_hold:'Hold',pq_analysis:'2A fails under analysis',pq_fatp:'Packed (gift box)',pq_worst:'Lowest 1A yield',pq_paste:'Paste rows from the Excel report (Sr.no, Part, Test, Input, 1A pass, 1A fail, 2A pass, 2A fail, …, Rework, NTF, Note)',pq_section:'Section name',pq_isHold:'Hold section',pq_none:'No QA reports yet. Send the report photo or file and it will be entered here.',
+d_lot:'Lot qty',d_done:'Packed so far',d_finish:'Forecast finish',d_stage:'Stage',d_target:'Target',d_actual:'Actual',d_today:'Today',d_pct:'Done',d_cap:'Per day',d_pred:'Fed by',d_nb:'Not before',d_ramp:'Ramp-up %',d_key:'Key',d_name:'Name',d_plan:'Plan',d_ms:'Ship milestones',d_hol:'Non-working days',d_events:'Events',d_wd:'Working days',d_start:'Start date',d_final:'Stage that counts as finished',d_none:'No production plan yet.',d_gap:'How to close the gap',d_ok:'On track for every ship milestone.',
+d_sCap:'Raise {st} from {a} to {b} pcs/day (+{p}%) with more manpower or overtime.',d_sDays:'Add {n} extra working day(s) before {d}. Non-working days available: {m}.',d_sDelay:'Or move this shipment to {d}, the forecast date.',d_msLine:'{q} pcs by {d}',d_reach:'reached {d}',d_noReach:'not reached in horizon',d_short:'short {n}',
+d_help:'Plan rows are recalculated from today using the remaining quantity, daily capacity, feeding stage and non-working days. Click an actual cell to enter output.',d_tsmt:'TSMT plan',d_gen:'Generated plan',d_fc:'Forecast',
+r_month:'Month',r_closed:'Closed this month',r_opened:'Opened this month',r_stillOpen:'Still open',r_avg:'Average days to close',r_ships:'Shipments completed',r_days:'Days taken',r_age:'Age (days)',r_none:'None.',r_transit:'Transit days',r_etaDelay:'ETA delay',
+td_add:'Add to-do',td_text:'To-do',saved:'Saved',deleted:'Deleted',saveErr:'Could not save: {x}',confirmDel:'Click Delete again to confirm.',
+mt_title:'Settings',mt_meet:'Weekly meeting day',mt_stale:'Flag no update after (days)',mt_win:'Look-ahead window (days)',mt_email:'Reminder email (later)',
+wd0:'Sun',wd1:'Mon',wd2:'Tue',wd3:'Wed',wd4:'Thu',wd5:'Fri',wd6:'Sat'
+},zh:{
+nav_today:'今日待辦',nav_shipments:'出貨追蹤',nav_materials:'TSMT 物料',nav_outbound:'客戶出貨',nav_production:'生產與品質',nav_dpr:'生產計劃',nav_issues:'未結問題',nav_report:'月度總結',
+owner:'您是擁有者，可編輯。',viewer:'僅供檢視，由專案負責人更新。',
+loading:'資料載入中…',noDb:'此檢視無法取得資料。請登入 claude.ai 後開啟。',timeout:'仍在等待資料，目前內容可能不是最新。',
+g_confirm:'今日需確認',g_due:'到期與逾期',g_prepare:'需準備',g_next7:'未來 7 天',g_todos:'我的待辦',nothing:'目前沒有項目。',
+k_action:'需處理',k_overdue:'逾期',k_moving:'運輸中',k_open:'未結問題',
+a_etdPassed:'ETD {d} 已過，請確認是否已出貨。',a_etdSoon:'ETD {d}，請確認訂艙與出貨。',a_etaPassed:'ETA {d} 已過，請確認是否到貨。',a_etaSoon:'ETA {d}，請確認到貨與清關。',
+a_stale:'已 {n} 天未更新',a_blocker:'阻礙 · {g}：{x}（已 {n} 天）',a_readyPassed:'備料日 {d} 已過，請向 ARC 確認。',a_readySoon:'ARC 預計 {d} 備妥，請通知 TSMT。',a_alert:'標記：{x}',
+a_obPassed:'計劃出貨日 {d} 已過，請確認狀態。',a_obSoon:'{d} 客戶出貨，請確認準備情況。',a_overdue:'自 {d} 逾期（{n} 天）',a_dueSoon:'{d} 到期',a_noDue:'未設定到期日',a_todo:'待辦 {d} 到期',
+a_qa:'今日品質報告：已收到 {n}/2 班',a_qaY:'昨日（{d}）無品質報告',a_dprShort:'預測在 {d} 前距 {q} pcs 尚差 {n} pcs',a_meeting:'週會 {d}：未結問題 {n} 項，{m} 項自上次會議後未更新',
+e_etd:'ETD',e_eta:'ETA',e_ready:'ARC 備妥',e_ship:'客戶出貨',e_due:'到期',e_ms:'出貨節點',e_hol:'非工作日',e_meet:'週會',
+s_po:'已建 PO',s_ready:'貨物備妥',s_docs:'發票 / 裝箱單',s_booking:'訂艙',s_shipped:'已出貨 (ETD)',s_arrived:'已到達 (ETA)',s_customs:'已清關',s_delivered:'已送達',
+o_production:'生產中',o_fg:'成品備妥',o_packing:'已包裝',o_booking:'已訂艙',o_shipped:'已出貨',o_delivered:'客戶已收',
+c_material:'物料',c_equipment:'機台 / 治具',c_sample:'樣品',c_return:'退貨',c_fg:'成品',c_other:'其他',
+b_docs:'文件準備',b_confirm:'等待確認',b_approval:'PR / PO 簽核',b_license:'許可證',b_customs:'海關',b_payment:'費用 / 付款',b_other:'其他',
+m_waiting:'等待供應商',m_ready:'ARC 已備妥',m_shipped:'已出貨',m_arrived:'已到 TSMT',m_short:'短缺',m_late:'延遲',
+f_all:'全部',f_active:'進行中',f_done:'已完成',
+l_route:'路線',l_terms:'交易方式',l_cost:'費用承擔',l_po:'PO',l_inv:'發票',l_qty:'數量',l_owner:'負責人',l_etd:'ETD',l_eta:'ETA',l_plan:'計劃',l_act:'實際',l_ready:'ARC 備妥日',l_mode:'運輸方式',l_process:'使用製程',l_lot:'批次',l_project:'專案',l_cat:'類型',l_alert:'標記',
+l_latest:'最新進度',l_history:'歷史紀錄',l_blockers:'阻礙',l_lastupd:'最後更新',l_delay:'延遲',days:'天',l_customer:'客戶',l_model:'機種 / SKU',l_shipPlan:'計劃出貨',l_shipAct:'實際出貨',l_dest:'目的地',l_issue:'問題',
+btn_add:'新增',btn_edit:'編輯',btn_update:'新增進度',btn_blocker:'新增阻礙',btn_next:'下一步',btn_save:'儲存',btn_cancel:'取消',btn_delete:'刪除',btn_resolve:'解除',btn_close:'結案',btn_reopen:'重新開啟',btn_more:'顯示歷史',btn_less:'隱藏歷史',btn_newplan:'新增批次計劃',btn_settings:'計劃設定',btn_addReport:'新增品質報告',btn_allDates:'全部日期',btn_window:'今日前後',btn_baseline:'顯示原始計劃',
+new_ship:'新增出貨',new_ob:'新增客戶出貨',new_issue:'新增問題',upd:'更新',
+pr_high:'高',pr_med:'中',pr_low:'低',st_open:'未開始',st_progress:'進行中',st_closed:'已結案',
+ic_shipment:'出貨',ic_material:'物料',ic_production:'生產',ic_quality:'品質',ic_equipment:'設備',ic_docs:'文件',ic_other:'其他',
+l_due:'到期日',l_opened:'開立',l_closed:'結案',l_reason:'結案原因 / 結果',l_prio:'優先級',l_status:'狀態',l_topic:'主題',l_owners:'負責人',l_cat2:'類別',l_text:'進度內容',l_date:'日期',
+m_lotsum:'各批次物料狀態',
+pq_report:'品質報告',pq_shift:'班別',pq_by:'回報人',pq_station:'測試站',pq_part:'料號',pq_input:'投入',pq_p1:'1A 通過',pq_f1:'1A 不良',pq_p2:'2A 通過',pq_f2:'2A 不良',pq_y1:'1A 良率',pq_y2:'2A 良率',pq_rt:'重測率',pq_rw:'已重工',pq_ntf:'NTF',pq_note:'不良說明',pq_stage:'DPR 製程',
+pq_vs:'與生產計劃比較',pq_qaIn:'品質投入（累計）',pq_dprAct:'DPR 實際（累計）',pq_planCum:'計劃（累計）',pq_lot:'佔批次 %',pq_hist:'報告歷史',pq_hold:'暫停',pq_analysis:'2A 不良分析中',pq_fatp:'已包裝（彩盒）',pq_worst:'最低 1A 良率',pq_paste:'從 Excel 報告貼上（序號、料號、測試、投入、1A 通過、1A 不良、2A 通過、2A 不良、…、重工、NTF、說明）',pq_section:'區段名稱',pq_isHold:'暫停區段',pq_none:'尚無品質報告。傳送報告照片或檔案後會在此更新。',
+d_lot:'批次數量',d_done:'已包裝',d_finish:'預測完成',d_stage:'製程',d_target:'目標',d_actual:'實際',d_today:'今日',d_pct:'完成',d_cap:'每日產能',d_pred:'前製程',d_nb:'最早開始',d_ramp:'爬坡 %',d_key:'代碼',d_name:'名稱',d_plan:'計劃',d_ms:'出貨節點',d_hol:'非工作日',d_events:'事件',d_wd:'工作日',d_start:'開始日',d_final:'完成判定製程',d_none:'尚無生產計劃。',d_gap:'如何補足差距',d_ok:'所有出貨節點皆可達成。',
+d_sCap:'將 {st} 由 {a} 提高到 {b} pcs/天（+{p}%），可增加人力或加班。',d_sDays:'在 {d} 前增加 {n} 個工作日，可用非工作日：{m}。',d_sDelay:'或將此批出貨延至預測日 {d}。',d_msLine:'{d} 前 {q} pcs',d_reach:'{d} 達成',d_noReach:'期間內無法達成',d_short:'差 {n}',
+d_help:'計劃列依剩餘數量、每日產能、前製程與非工作日，從今天起重新計算。點選實際格可輸入產出。',d_tsmt:'TSMT 計劃',d_gen:'系統計劃',d_fc:'預測',
+r_month:'月份',r_closed:'本月結案',r_opened:'本月開立',r_stillOpen:'仍未結案',r_avg:'平均結案天數',r_ships:'本月完成出貨',r_days:'耗時（天）',r_age:'已開立（天）',r_none:'無。',r_transit:'運輸天數',r_etaDelay:'ETA 延遲',
+td_add:'新增待辦',td_text:'待辦事項',saved:'已儲存',deleted:'已刪除',saveErr:'無法儲存：{x}',confirmDel:'再按一次刪除以確認。',
+mt_title:'設定',mt_meet:'週會日',mt_stale:'未更新提醒（天）',mt_win:'提前提醒（天）',mt_email:'提醒信箱（之後設定）',
+wd0:'日',wd1:'一',wd2:'二',wd3:'三',wd4:'四',wd5:'五',wd6:'六'
+}};
+let lang='en';try{lang=localStorage.getItem('tsmt_lang')||'en'}catch(e){}
+function t(k,p){let s=(L[lang]&&L[lang][k])||L.en[k]||k;if(p)for(const x in p)s=s.split('{'+x+'}').join(p[x]);return s}
+
+/* ---------- helpers ---------- */
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const TODAY=iso(new Date());
+const pd=s=>{const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c)};
+const addDays=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return iso(d)};
+const diff=(a,b)=>Math.round((pd(b)-pd(a))/864e5);
+const dow=s=>pd(s).getDay();
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fd(s){if(!s)return '—';const d=pd(s);return lang==='zh'?(d.getMonth()+1)+'/'+d.getDate():MON[d.getMonth()]+' '+d.getDate()}
+function fdw(s){return t('wd'+dow(s))+' '+fd(s)}
+const num=n=>(n==null||n==='')?'—':Number(n).toLocaleString('en-US');
+const pct=(a,b)=>b?(a/b*100):0;
+const fp=x=>x.toFixed(2)+'%';
+const clone=o=>JSON.parse(JSON.stringify(o));
+const lastLog=o=>(o.log&&o.log.length)?o.log.reduce((m,x)=>x.d>m.d?x:m,o.log[0]):null;
+const sortLog=l=>(l||[]).slice().sort((a,b)=>b.d.localeCompare(a.d));
+
+/* ---------- state ---------- */
+const COLS=['shipments','outbound','issues','qa','plans','todos'];
+const S={view:'today',db:null,state:'loading',isOwner:false,settings:{meetingDay:4,staleDays:3,window:3},loaded:{},
+  shipments:[],outbound:[],issues:[],qa:[],plans:[],todos:[],
+  open:new Set(),shipFilter:'active',shipCat:'all',obFilter:'active',issueFilter:'active',issueProj:'all',planId:null,gridAll:false,showBase:false,qaId:null,month:TODAY.slice(0,7),delArm:null};
+
+/* ---------- data ---------- */
+async function boot(){
+  renderNav();renderMain();
+  const c=window.claude;
+  if(!c||!c.use){S.state='none';renderMain();return}
+  let db=null,user=null;
+  try{[db,user]=await Promise.all([c.use('db'),c.use('user')])}catch(e){}
+  if(user){try{S.isOwner=await user.isOwner()}catch(e){}}
+  if(!db){S.state='none';renderAll();return}
+  S.db=db;
+  const timer=setTimeout(()=>{if(S.state==='loading'){S.state='timeout';renderMain()}},10000);
+  COLS.forEach(col=>{
+    db.collection(col).onSnapshot(snap=>{
+      S[col]=snap.docs.map(d=>Object.assign({id:d.id},d.data()));
+      S.loaded[col]=true;
+      if(COLS.every(k=>S.loaded[k])){S.state='ok';clearTimeout(timer)}
+      renderAll();
+    },err=>{S.state='none';clearTimeout(timer);renderAll()});
+  });
+  db.doc('meta/settings').onSnapshot(s=>{if(s.exists)S.settings=Object.assign({meetingDay:4,staleDays:3,window:3},s.data());renderAll()},()=>{});
+}
+async function put(col,id,data){
+  try{await S.db.collection(col).doc(id).set(data);toast(t('saved'))}catch(e){toast(t('saveErr',{x:e.code||e.message}));throw e}
+}
+async function patch(col,id,data){
+  try{await S.db.collection(col).doc(id).update(data);toast(t('saved'))}catch(e){toast(t('saveErr',{x:e.code||e.message}));throw e}
+}
+async function del(col,id){try{await S.db.collection(col).doc(id).delete();toast(t('deleted'))}catch(e){toast(t('saveErr',{x:e.code||e.message}))}}
+const newId=col=>S.db.collection(col).doc().id;
+let toastT;function toast(m){const el=document.createElement('div');el.className='toast';el.textContent=m;document.body.appendChild(el);clearTimeout(toastT);toastT=setTimeout(()=>el.remove(),1800)}
+
+/* ---------- derived: material status ---------- */
+function matStatus(s){
+  if(s.stage>=7)return 'arrived';
+  if(s.stage>=4)return 'shipped';
+  if(s.stage>=1)return 'ready';
+  return 'waiting';
+}
+function shipLate(s){
+  const eta=s.etaActual||s.etaPlan;
+  if(s.etaPlan&&!s.etaActual&&s.stage<5&&s.etaPlan<TODAY)return diff(s.etaPlan,TODAY);
+  if(s.etaPlan&&s.etaActual&&s.etaActual>s.etaPlan)return diff(s.etaPlan,s.etaActual);
+  return 0;
+}
+
+/* ---------- production plan engine ---------- */
+function genPlan(p,mode){
+  const start=p.startDate;
+  let last=start;(p.milestones||[]).forEach(m=>{if(m.d>last)last=m.d});if(TODAY>last)last=TODAY;
+  const end=addDays(last,75);const days=[];
+  for(let d=start;d<=end&&days.length<240;d=addDays(d,1))days.push(d);
+  const hol=new Set((p.holidays||[]).map(h=>h.d));const wd=new Set(p.workDays||[1,2,3,4,5,6]);
+  const isWork=d=>wd.has(dow(d))&&!hol.has(d);
+  const res={};
+  (p.stages||[]).forEach(s=>{
+    const act=(p.actuals||{})[s.key]||{};const pred=s.pred&&res[s.pred];const lag=+s.lag||0;const ramp=s.ramp||[];
+    let cum=0,prod=0;const daily={},cumArr=[];
+    days.forEach((d,i)=>{
+      let q=0;
+      if(mode==='forecast'&&d<TODAY){q=+act[d]||0}
+      else if(isWork(d)&&d>=(s.notBefore||start)&&cum<s.target){
+        const rf=prod<ramp.length?ramp[prod]:100;const capQ=Math.round(s.cap*rf/100);
+        let avail=Infinity;if(pred){const j=i-lag;avail=(j>=0?pred.cumArr[j]:0)-cum}
+        q=Math.max(0,Math.min(capQ,s.target-cum,avail));
+      }
+      if(q>0)prod++;cum+=q;daily[d]=q;cumArr.push(cum);
+    });
+    const fi=cumArr.findIndex(c=>c>=s.target);
+    res[s.key]={daily,cumArr,finish:fi>=0?days[fi]:null,total:cum};
+  });
+  return {days,res,isWork,hol};
+}
+function actualCum(p,key,upTo){const a=(p.actuals||{})[key]||{};let c=0;for(const d in a)if(!upTo||d<=upTo)c+=+a[d]||0;return c}
+function expectedCum(p,g,key,d){
+  const a=(p.actuals||{})[key]||{};const lastA=Object.keys(a).filter(x=>x<=d).sort().pop()||'';
+  const tp=((p.tsmtPlan||{})[key]);
+  if(tp&&Object.keys(tp).length){let c=actualCum(p,key,lastA||'0000');for(const x in tp)if(x>lastA&&x<=d)c+=+tp[x]||0;return Math.min(c,(p.stages.find(s=>s.key===key)||{}).target||c)}
+  return cumAt(g,key,d);
+}
+function cumAt(g,key,d){const r=g.res[key];if(!r)return 0;const i=g.days.indexOf(d);if(i>=0)return r.cumArr[i];return d<g.days[0]?0:r.total}
+function analysePlan(p){
+  const g=genPlan(p,'forecast');const fin=p.finalStage||(p.stages[p.stages.length-1]||{}).key;const fr=g.res[fin];
+  const ms=(p.milestones||[]).map(m=>{const c=cumAt(g,fin,m.d);const ri=fr?fr.cumArr.findIndex(x=>x>=m.qty):-1;return Object.assign({},m,{cum:c,short:Math.max(0,m.qty-c),reach:ri>=0?g.days[ri]:null})});
+  const gap=ms.find(m=>m.short>0&&m.d>=TODAY);
+  let sugg=[];
+  if(gap){
+    let W=0,M=[];for(let d=TODAY;d<=gap.d;d=addDays(d,1)){if(g.isWork(d))W++;else M.push(d)}
+    let worst=null;
+    p.stages.forEach(s=>{
+      const done=cumAt(g,s.key,addDays(TODAY,-1));const need=Math.max(0,Math.min(gap.qty,s.target)-done);
+      if(!need||!W)return;const req=Math.ceil(need/W);
+      if(req>s.cap){sugg.push({type:'cap',st:s.name,a:s.cap,b:req,p:Math.round((req/s.cap-1)*100)})}
+      const r=need/s.cap;if(!worst||r>worst.r)worst={r,s,need};
+    });
+    if(worst){const extra=Math.ceil(worst.need/worst.s.cap)-W;if(extra>0)sugg.push({type:'days',n:extra,d:gap.d,m:M.map(fd).join(', ')||'—'})}
+    if(gap.reach)sugg.push({type:'delay',d:gap.reach});
+  }
+  return {g,fin,ms,gap,sugg};
+}
+
+/* ---------- agenda (Today) ---------- */
+function buildAgenda(){
+  const st=S.settings,W=+st.window||3,stale=+st.staleDays||3;const out=[];
+  const push=(grp,sev,text,sub,go,id)=>out.push({grp,sev,text,sub,go,id});
+  S.shipments.forEach(s=>{
+    if(s.stage>=7)return;const nm=s.title;
+    if(s.etdPlan&&!s.etdActual&&s.stage<4){
+      if(s.etdPlan<TODAY)push('confirm','bad',t('a_etdPassed',{d:fd(s.etdPlan)}),nm,'shipments',s.id);
+      else if(diff(TODAY,s.etdPlan)<=W)push('confirm','warn',t('a_etdSoon',{d:fd(s.etdPlan)}),nm,'shipments',s.id);
+    }
+    if(s.etaPlan&&!s.etaActual&&s.stage<5&&s.stage>=4){
+      if(s.etaPlan<TODAY)push('confirm','bad',t('a_etaPassed',{d:fd(s.etaPlan)}),nm,'shipments',s.id);
+      else if(diff(TODAY,s.etaPlan)<=W)push('confirm','warn',t('a_etaSoon',{d:fd(s.etaPlan)}),nm,'shipments',s.id);
+    }
+    if(s.category==='material'&&s.readyDate&&s.stage<1){
+      if(s.readyDate<TODAY)push('confirm','bad',t('a_readyPassed',{d:fd(s.readyDate)}),nm,'materials',s.id);
+      else if(diff(TODAY,s.readyDate)<=W)push('prepare','warn',t('a_readySoon',{d:fd(s.readyDate)}),nm,'materials',s.id);
+    }
+    if(s.alert)push('due','bad',t('a_alert',{x:t('m_'+s.alert)}),nm,s.category==='material'?'materials':'shipments',s.id);
+    (s.blockers||[]).filter(b=>!b.done).forEach(b=>push('due','warn',t('a_blocker',{g:t('b_'+b.group),x:b.detail,n:b.since?diff(b.since,TODAY):0}),nm,'shipments',s.id));
+    const ll=lastLog(s);if(ll&&diff(ll.d,TODAY)>stale)push('confirm','info',t('a_stale',{n:diff(ll.d,TODAY)}),nm,s.category==='material'?'materials':'shipments',s.id);
+  });
+  S.outbound.forEach(o=>{
+    if(o.stage>=5)return;const nm=(o.customer||'')+' · '+(o.model||'')+' · '+num(o.qty)+' pcs';
+    if(o.shipPlan&&o.stage<4){
+      if(o.shipPlan<TODAY)push('confirm','bad',t('a_obPassed',{d:fd(o.shipPlan)}),nm,'outbound',o.id);
+      else if(diff(TODAY,o.shipPlan)<=W)push('confirm','warn',t('a_obSoon',{d:fd(o.shipPlan)}),nm,'outbound',o.id);
+    }
+    const ll=lastLog(o);if(ll&&diff(ll.d,TODAY)>stale)push('confirm','info',t('a_stale',{n:diff(ll.d,TODAY)}),nm,'outbound',o.id);
+  });
+  S.issues.forEach(i=>{
+    if(i.status==='closed')return;const nm=i.topic+' · '+(i.project||'');
+    if(i.dueDate&&i.dueDate<TODAY)push('due','bad',t('a_overdue',{d:fd(i.dueDate),n:diff(i.dueDate,TODAY)}),nm,'issues',i.id);
+    else if(i.dueDate&&diff(TODAY,i.dueDate)<=2)push('due','warn',t('a_dueSoon',{d:fd(i.dueDate)}),nm,'issues',i.id);
+    const ll=lastLog(i);if(ll&&diff(ll.d,TODAY)>7&&!(i.dueDate&&i.dueDate<TODAY))push('confirm','info',t('a_stale',{n:diff(ll.d,TODAY)}),nm,'issues',i.id);
+  });
+  S.todos.forEach(x=>{if(!x.done&&x.due&&x.due<=TODAY)push('due',x.due<TODAY?'bad':'warn',t('a_todo',{d:fd(x.due)}),x.text,'today',x.id)});
+  S.plans.filter(p=>p.active!==false).forEach(p=>{
+    const a=analysePlan(p);
+    if(a.gap)push('prepare','bad',t('a_dprShort',{n:num(a.gap.short),q:num(a.gap.qty),d:fd(a.gap.d)}),p.name,'dpr',p.id);
+    const proj=p.project;
+    const todayR=S.qa.filter(r=>r.date===TODAY&&r.project===proj).length;
+    if(dow(TODAY)!==0&&todayR<2)push('prepare','info',t('a_qa',{n:todayR}),p.name,'production',null);
+    const y=addDays(TODAY,-1);
+    if(dow(y)!==0&&!(p.holidays||[]).some(h=>h.d===y)&&!S.qa.some(r=>r.date===y&&r.project===proj))push('confirm','warn',t('a_qaY',{d:fd(y)}),p.name,'production',null);
+  });
+  const md=+S.settings.meetingDay;let nm=TODAY;while(dow(nm)!==md)nm=addDays(nm,1);
+  if(diff(TODAY,nm)<=2){
+    const lastM=addDays(nm,-7);const open=S.issues.filter(i=>i.status!=='closed');
+    const notUpd=open.filter(i=>{const l=lastLog(i);return !l||l.d<=lastM}).length;
+    push('prepare','info',t('a_meeting',{d:fdw(nm),n:open.length,m:notUpd}),'','issues',null);
+  }
+  return {items:out,nextMeeting:nm};
+}
+function next7(nextMeeting){
+  const days=[];for(let i=0;i<8;i++)days.push(addDays(TODAY,i));const ev={};days.forEach(d=>ev[d]=[]);
+  const add=(d,txt)=>{if(ev[d])ev[d].push(txt)};
+  S.shipments.forEach(s=>{if(s.stage>=7)return;if(s.etdPlan&&!s.etdActual)add(s.etdPlan,t('e_etd')+' · '+s.title);if(s.etaPlan&&!s.etaActual)add(s.etaPlan,t('e_eta')+' · '+s.title);if(s.readyDate&&s.stage<1)add(s.readyDate,t('e_ready')+' · '+s.title)});
+  S.outbound.forEach(o=>{if(o.stage<4&&o.shipPlan)add(o.shipPlan,t('e_ship')+' · '+o.customer+' '+num(o.qty))});
+  S.issues.forEach(i=>{if(i.status!=='closed'&&i.dueDate)add(i.dueDate,t('e_due')+' · '+i.topic)});
+  S.todos.forEach(x=>{if(!x.done&&x.due)add(x.due,'☐ '+x.text)});
+  S.plans.forEach(p=>{(p.milestones||[]).forEach(m=>add(m.d,t('e_ms')+' · '+p.name+' '+num(m.qty)));(p.holidays||[]).forEach(h=>add(h.d,t('e_hol')+' · '+(h.label||'')))});
+  add(nextMeeting,t('e_meet'));
+  return days.map(d=>({d,list:ev[d]}));
+}
+
+/* ---------- render shell ---------- */
+function renderAll(){renderNav();renderMain()}
+function renderNav(){
+  let badge=0;try{badge=buildAgenda().items.filter(i=>i.sev==='bad').length}catch(e){}
+  document.getElementById('nav').innerHTML=VIEWS.map(v=>`<a href="#${v}" data-a="nav" data-v="${v}" class="${S.view===v?'on':''}">${esc(t('nav_'+v))}${v==='today'&&badge?`<span class="cnt">${badge}</span>`:''}</a>`).join('');
+  document.querySelectorAll('#langSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===lang));
+  document.getElementById('roleNote').textContent=S.state==='ok'||S.state==='timeout'?(S.isOwner?t('owner'):t('viewer')):'';
+}
+function renderMain(){
+  const m=document.getElementById('main');
+  if(S.state==='loading'){m.innerHTML=`<div class="banner">${t('loading')}</div>`;return}
+  if(S.state==='none'){m.innerHTML=`<div class="banner bad">${t('noDb')}</div>`;return}
+  const pre=S.state==='timeout'?`<div class="banner">${t('timeout')}</div>`:'';
+  const f={today:vToday,shipments:vShipments,materials:vMaterials,outbound:vOutbound,production:vProduction,dpr:vDpr,issues:vIssues,report:vReport}[S.view]||vToday;
+  m.innerHTML=pre+f();
+}
+const ownerOnly=h=>S.isOwner?h:'';
+const top=(title,meta,actions)=>`<div class="top"><div><h2>${esc(title)}</h2>${meta?`<div class="meta">${meta}</div>`:''}</div><div class="row">${actions||''}</div></div>`;
+
+/* ---------- views ---------- */
+function vToday(){
+  const {items,nextMeeting}=buildAgenda();
+  const sevOrder={bad:0,warn:1,info:2};items.sort((a,b)=>sevOrder[a.sev]-sevOrder[b.sev]);
+  const grp=g=>{const l=items.filter(i=>i.grp===g);return `<div class="card"><h3>${t('g_'+g)} <span class="n">${l.length}</span></h3><div class="items">${l.length?l.map(itemRow).join(''):`<div class="empty">${t('nothing')}</div>`}</div></div>`};
+  const moving=S.shipments.filter(s=>s.stage>=4&&s.stage<7).length+S.outbound.filter(o=>o.stage===4).length;
+  const kp=`<div class="kpis">
+    <div class="kpi ${items.length?'warn':'ok'}"><div class="v">${items.filter(i=>i.sev!=='info').length}</div><div class="l">${t('k_action')}</div></div>
+    <div class="kpi ${items.some(i=>i.sev==='bad')?'bad':'ok'}"><div class="v">${items.filter(i=>i.sev==='bad').length}</div><div class="l">${t('k_overdue')}</div></div>
+    <div class="kpi"><div class="v">${moving}</div><div class="l">${t('k_moving')}</div></div>
+    <div class="kpi"><div class="v">${S.issues.filter(i=>i.status!=='closed').length}</div><div class="l">${t('k_open')}</div></div></div>`;
+  const ag=next7(nextMeeting).map(x=>`<div class="aday"><b class="${x.d===TODAY?'td':''}">${fdw(x.d)}</b>${x.list.length?`<ul>${x.list.map(e=>`<li>${esc(e)}</li>`).join('')}</ul>`:`<div class="none">—</div>`}</div>`).join('');
+  const todos=S.todos.filter(x=>!x.done).sort((a,b)=>(a.due||'9').localeCompare(b.due||'9'));
+  const td=`<div class="card"><h3>${t('g_todos')} <span class="n">${todos.length}</span></h3><div class="items">${todos.length?todos.map(x=>`<div class="item" style="cursor:default"><span class="dot ${x.due&&x.due<TODAY?'bad':x.due===TODAY?'warn':''}"></span><div><div class="it">${esc(x.text)}</div><div class="is">${x.due?fd(x.due):''}</div></div>${ownerOnly(`<button class="btn sm" data-a="todoDone" data-id="${x.id}">✓</button>`)}</div>`).join(''):`<div class="empty">${t('nothing')}</div>`}</div>${ownerOnly(`<div class="row" style="margin-top:10px"><input id="todoText" placeholder="${esc(t('td_text'))}" style="flex:2 1 160px"><input id="todoDue" type="date" style="flex:1 1 120px"><button class="btn" data-a="todoAdd">${t('td_add')}</button></div>`)}</div>`;
+  return top(t('nav_today'),fdw(TODAY)+' · '+TODAY,ownerOnly(`<button class="btn" data-a="settings">${t('mt_title')}</button>`))+kp+
+    `<div class="cols"><div class="stack">${grp('confirm')}${grp('due')}${grp('prepare')}</div><div class="stack"><div class="card"><h3>${t('g_next7')}</h3><div class="agenda">${ag}</div></div>${td}</div></div>`;
+}
+function itemRow(i){return `<div class="item" data-a="go" data-go="${i.go}" data-id="${i.id||''}"><span class="dot ${i.sev}"></span><div><div class="it">${esc(i.text)}</div>${i.sub?`<div class="is">${esc(i.sub)}</div>`:''}</div><span class="tag">${esc(t('nav_'+i.go))}</span></div>`}
+
+function stepsHTML(steps,stage,prefix){return `<div class="steps">${steps.map((k,i)=>`<div class="st ${i<=stage?'done':''} ${i===stage+1?'cur':''}"><i></i>${esc(t(prefix+k))}</div>`).join('')}</div>`}
+function latestHTML(o){const l=lastLog(o);return l?`<div class="latest"><span class="d">${fd(l.d)}</span>${esc(l.text)}</div>`:''}
+function logHTML(o,col){
+  const open=S.open.has(o.id);const lg=sortLog(o.log);
+  return `<div class="row">${lg.length>1?`<button class="btn sm" data-a="toggle" data-id="${o.id}">${open?t('btn_less'):t('btn_more')} (${lg.length})</button>`:''}${ownerOnly(`<button class="btn sm" data-a="addLog" data-col="${col}" data-id="${o.id}">${t('btn_update')}</button>`)}</div>${open?`<div class="log">${lg.map(x=>`<div><span class="d">${x.d}</span>${esc(x.text)}</div>`).join('')}</div>`:''}`;
+}
+function shipCard(s){
+  const late=shipLate(s);const ll=lastLog(s);
+  const blk=(s.blockers||[]).map((b,i)=>b.done?'':`<span class="pill warn">${esc(t('b_'+b.group))}: ${esc(b.detail)}${b.since?` · ${diff(b.since,TODAY)}d`:''}${ownerOnly(` <a href="#" data-a="resolveBlk" data-id="${s.id}" data-i="${i}" style="color:inherit">✕</a>`)}</span>`).join('');
+  const isMat=s.category==='material';
+  const ms=isMat?`<span class="pill ${matStatus(s)==='arrived'?'ok':matStatus(s)==='waiting'?'warn':'acc'}">${t('m_'+matStatus(s))}</span>`:'';
+  return `<div class="card ship" id="c_${s.id}">
+    <div class="shead"><div><div class="stitle">${esc(s.title)}</div><div class="route">${esc(s.from||'?')} → ${esc(s.to||'?')}${s.mode?' · '+esc(s.mode):''}</div></div>
+      <div class="row"><span class="pill">${esc(t('c_'+s.category))}</span>${ms}${s.alert?`<span class="pill bad">${t('m_'+s.alert)}</span>`:''}${late?`<span class="pill bad">${t('l_delay')} ${late}d</span>`:''}${s.project?`<span class="pill acc">${esc(s.project)}${s.lot?' · '+esc(s.lot):''}</span>`:''}</div></div>
+    ${stepsHTML(STEPS,s.stage??-1,'s_')}
+    <div class="facts">
+      ${isMat?`<div><span>${t('l_process')}</span><b>${esc(s.process||'—')}</b></div><div><span>${t('l_ready')}</span><b>${fd(s.readyDate)}</b></div>`:''}
+      <div><span>${t('l_qty')}</span><b>${s.qty?num(s.qty):'—'}</b></div>
+      <div><span>${t('l_etd')} ${t('l_plan')} / ${t('l_act')}</span><b>${fd(s.etdPlan)} / ${fd(s.etdActual)}</b></div>
+      <div><span>${t('l_eta')} ${t('l_plan')} / ${t('l_act')}</span><b class="${late?'late':''}">${fd(s.etaPlan)} / ${fd(s.etaActual)}</b></div>
+      <div><span>${t('l_terms')}</span><b>${esc(s.terms||'—')}</b></div><div><span>${t('l_cost')}</span><b>${esc(s.costBearer||'—')}</b></div>
+      <div><span>${t('l_po')} / ${t('l_inv')}</span><b class="mono">${esc(s.po||'—')} / ${esc(s.invoice||'—')}</b></div>
+      <div><span>${t('l_owner')}</span><b>${esc(s.owner||'—')}</b></div><div><span>${t('l_lastupd')}</span><b>${ll?fd(ll.d)+' ('+diff(ll.d,TODAY)+'d)':'—'}</b></div>
+    </div>
+    ${blk.trim()?`<div class="blk">${blk}</div>`:''}
+    ${latestHTML(s)}
+    ${logHTML(s,'shipments')}
+    ${ownerOnly(`<div class="row">${s.stage<7?`<button class="btn sm pri" data-a="nextStep" data-col="shipments" data-id="${s.id}">${t('btn_next')}: ${t('s_'+STEPS[(s.stage??-1)+1])}</button>`:''}<button class="btn sm" data-a="addBlk" data-id="${s.id}">${t('btn_blocker')}</button><button class="btn sm" data-a="editShip" data-id="${s.id}">${t('btn_edit')}</button></div>`)}
+  </div>`;
+}
+function chips(name,cur,opts){return `<div class="filters">${opts.map(([v,l])=>`<button class="chipf ${cur===v?'on':''}" data-a="filter" data-k="${name}" data-v="${v}">${esc(l)}</button>`).join('')}</div>`}
+function vShipments(){
+  let l=S.shipments.slice();
+  if(S.shipFilter==='active')l=l.filter(s=>s.stage<7);else if(S.shipFilter==='done')l=l.filter(s=>s.stage>=7);
+  if(S.shipCat!=='all')l=l.filter(s=>s.category===S.shipCat);
+  l.sort((a,b)=>(a.etaPlan||a.etdPlan||'9').localeCompare(b.etaPlan||b.etdPlan||'9'));
+  return top(t('nav_shipments'),'VN · TW · IN · '+(lang==='zh'?'供應商 · 倉庫':'suppliers · warehouses'),ownerOnly(`<button class="btn pri" data-a="editShip">${t('new_ship')}</button>`))+
+    `<div class="row">${chips('shipFilter',S.shipFilter,[['active',t('f_active')],['done',t('f_done')],['all',t('f_all')]])}${chips('shipCat',S.shipCat,[['all',t('f_all')]].concat(CATS.map(c=>[c,t('c_'+c)])))}</div>`+
+    (l.length?l.map(shipCard).join(''):`<div class="card empty">${t('nothing')}</div>`);
+}
+function vMaterials(){
+  const mats=S.shipments.filter(s=>s.category==='material');
+  const lots={};mats.forEach(s=>{const k=(s.project||'—')+' · '+(s.lot||'—');(lots[k]=lots[k]||[]).push(s)});
+  const keys=['waiting','ready','shipped','arrived'];
+  const sum=Object.keys(lots).map(k=>{const c={};keys.forEach(x=>c[x]=0);lots[k].forEach(s=>c[matStatus(s)]++);return `<tr><td>${esc(k)}</td>${keys.map(x=>`<td class="n">${c[x]||''}</td>`).join('')}<td class="n">${lots[k].filter(s=>s.alert).length||''}</td></tr>`}).join('');
+  const active=mats.filter(s=>s.stage<7).sort((a,b)=>(a.readyDate||a.etaPlan||'9').localeCompare(b.readyDate||b.etaPlan||'9'));
+  const done=mats.filter(s=>s.stage>=7);
+  return top(t('nav_materials'),'ARC → TSMT',ownerOnly(`<button class="btn pri" data-a="editShip" data-cat="material">${t('new_ship')}</button>`))+
+    `<div class="card"><h3>${t('m_lotsum')}</h3><div class="tw"><table><thead><tr><th>${t('l_project')} · ${t('l_lot')}</th>${keys.map(x=>`<th class="n">${t('m_'+x)}</th>`).join('')}<th class="n">${t('m_short')}/${t('m_late')}</th></tr></thead><tbody>${sum||`<tr><td colspan="6" class="muted">${t('nothing')}</td></tr>`}</tbody></table></div></div>`+
+    `<div class="card"><div class="tw"><table><thead><tr><th>${t('l_topic')}</th><th>${t('l_process')}</th><th>${t('l_qty')}</th><th>${t('l_status')}</th><th>${t('l_ready')}</th><th>${t('l_eta')}</th><th>${t('l_lastupd')}</th></tr></thead><tbody>${active.map(s=>{const ll=lastLog(s);const ms=matStatus(s);return `<tr data-a="go" data-go="materials" data-id="${s.id}" style="cursor:pointer"><td><b>${esc(s.title)}</b><div class="muted">${esc(s.project||'')} ${esc(s.lot||'')}</div></td><td>${esc(s.process||'—')}</td><td class="n">${s.qty?num(s.qty):'—'}</td><td><span class="pill ${ms==='waiting'?'warn':'acc'}">${t('m_'+ms)}</span>${s.alert?` <span class="pill bad">${t('m_'+s.alert)}</span>`:''}</td><td>${fd(s.readyDate)}</td><td>${fd(s.etaActual||s.etaPlan)}</td><td>${ll?fd(ll.d):'—'}</td></tr>`}).join('')||`<tr><td colspan="7" class="muted">${t('nothing')}</td></tr>`}</tbody></table></div></div>`+
+    active.map(shipCard).join('')+(done.length?`<div class="grp">${t('f_done')}</div>`+done.map(shipCard).join(''):'');
+}
+function obCard(o){
+  const late=o.shipPlan&&o.stage<4&&o.shipPlan<TODAY?diff(o.shipPlan,TODAY):0;
+  return `<div class="card ship" id="c_${o.id}"><div class="shead"><div><div class="stitle">${esc(o.customer)} · ${esc(o.model||'')}</div><div class="route">TSMT → ${esc(o.dest||'?')}${o.mode?' · '+esc(o.mode):''}</div></div><div class="row">${o.project?`<span class="pill acc">${esc(o.project)}${o.lot?' · '+esc(o.lot):''}</span>`:''}${late?`<span class="pill bad">${t('l_delay')} ${late}d</span>`:''}</div></div>
+  ${stepsHTML(OB_STEPS,o.stage??-1,'o_')}
+  <div class="facts"><div><span>${t('l_qty')}</span><b>${num(o.qty)}</b></div><div><span>${t('l_shipPlan')}</span><b class="${late?'late':''}">${fd(o.shipPlan)}</b></div><div><span>${t('l_shipAct')}</span><b>${fd(o.shipActual)}</b></div><div><span>${t('l_eta')}</span><b>${fd(o.eta)}</b></div></div>
+  ${o.issue?`<div class="blk"><span class="pill warn">${esc(o.issue)}</span></div>`:''}
+  ${latestHTML(o)}${logHTML(o,'outbound')}
+  ${ownerOnly(`<div class="row">${o.stage<5?`<button class="btn sm pri" data-a="nextStep" data-col="outbound" data-id="${o.id}">${t('btn_next')}: ${t('o_'+OB_STEPS[(o.stage??-1)+1])}</button>`:''}<button class="btn sm" data-a="editOb" data-id="${o.id}">${t('btn_edit')}</button></div>`)}</div>`;
+}
+function vOutbound(){
+  let l=S.outbound.slice();if(S.obFilter==='active')l=l.filter(o=>o.stage<5);else if(S.obFilter==='done')l=l.filter(o=>o.stage>=5);
+  l.sort((a,b)=>(a.shipPlan||'9').localeCompare(b.shipPlan||'9'));
+  return top(t('nav_outbound'),'TSMT → '+(lang==='zh'?'客戶':'customers'),ownerOnly(`<button class="btn pri" data-a="editOb">${t('new_ob')}</button>`))+
+    chips('obFilter',S.obFilter,[['active',t('f_active')],['done',t('f_done')],['all',t('f_all')]])+(l.length?l.map(obCard).join(''):`<div class="card empty">${t('nothing')}</div>`);
+}
+
+/* production / QA */
+function qaRowCalc(r){const inp=+r.input||0;return {y1:pct(+r.p1||0,inp),y2:pct((+r.p1||0)+(+r.p2||0),inp),rt:pct(+r.p2||0,inp),f2:(+r.f1||0)-(+r.p2||0)}}
+function vProduction(){
+  const list=S.qa.slice().sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||'')));
+  const head=top(t('nav_production'),'',ownerOnly(`<button class="btn pri" data-a="addQa">${t('btn_addReport')}</button>`));
+  if(!list.length)return head+`<div class="card empty">${t('pq_none')}</div>`;
+  const r=list.find(x=>x.id===S.qaId)||list[0];
+  const plan=S.plans.find(p=>p.id===r.planId)||S.plans.find(p=>p.project===r.project);
+  const ov=(r.sections||[]).filter(s=>!s.hold);const hold=(r.sections||[]).filter(s=>s.hold);
+  let analysis=0;(r.sections||[]).forEach(s=>s.rows.forEach(x=>{const m=String(x.note||'').match(/(\d+)\s*$/);if(m)analysis+=+m[1]}));
+  const allRows=ov.flatMap(s=>s.rows).filter(x=>+x.input>0);
+  const worst=allRows.slice().sort((a,b)=>qaRowCalc(a).y1-qaRowCalc(b).y1)[0];
+  const pack=allRows.filter(x=>/gift\s*box/i.test(x.station)).reduce((a,x)=>a+(+x.input||0),0);
+  const holdQty=hold.reduce((a,s)=>{const m=String(s.name).match(/(\d[\d,]*)\s*pcs/i);return a+(m?+m[1].replace(/,/g,''):0)},0);
+  const kp=`<div class="kpis"><div class="kpi"><div class="v">${num(pack)}</div><div class="l">${t('pq_fatp')}</div></div>
+    <div class="kpi ${worst&&qaRowCalc(worst).y1<95?'warn':''}"><div class="v">${worst?fp(qaRowCalc(worst).y1):'—'}</div><div class="l">${t('pq_worst')}${worst?' · '+esc(worst.station):''}</div></div>
+    <div class="kpi ${analysis?'warn':''}"><div class="v">${analysis}</div><div class="l">${t('pq_analysis')}</div></div>
+    <div class="kpi ${holdQty?'bad':''}"><div class="v">${num(holdQty)}</div><div class="l">${t('pq_hold')}</div></div></div>`;
+  const yc=(v,lo,hi)=>v<lo?'late':v<hi?'':'';
+  const rowsHTML=sec=>`<tr class="secrow ${sec.hold?'hold':''}"><td colspan="13">${esc(sec.name)}</td></tr>`+sec.rows.map((x,ri)=>{const c=qaRowCalc(x);return `<tr class="${sec.hold?'hold':''}"><td class="mono">${esc(x.part||'')}</td><td><b>${esc(x.station)}</b></td><td class="n">${num(x.input)}</td><td class="n">${num(x.p1)}</td><td class="n">${num(x.f1)}</td><td class="n">${num(x.p2)}</td><td class="n">${num(c.f2)}</td><td class="n ${c.y1<95?'late':''}">${fp(c.y1)}</td><td class="n ${c.y2<99?'late':''}">${fp(c.y2)}</td><td class="n">${fp(c.rt)}</td><td class="n">${x.rework||''}</td><td class="n">${x.ntf||''}</td><td>${esc(x.note||'')}${x.stage?` <span class="pill acc">${esc(x.stage)}</span>`:''}</td></tr>`}).join('');
+  let vs='';
+  if(plan){
+    const g=genPlan(plan,'forecast');const mapped=ov.flatMap(s=>s.rows).filter(x=>x.stage&&plan.stages.some(s=>s.key===x.stage));
+    if(mapped.length)vs=`<div class="card"><h3>${t('pq_vs')} <span class="n">${esc(plan.name)}</span></h3><div class="tw"><table><thead><tr><th>${t('pq_station')}</th><th>${t('pq_stage')}</th><th class="n">${t('pq_qaIn')}</th><th class="n">${t('pq_dprAct')}</th><th class="n">${t('pq_planCum')}</th><th class="n">${t('pq_lot')}</th><th></th></tr></thead><tbody>${mapped.map(x=>{const st=plan.stages.find(s=>s.key===x.stage);const pc=expectedCum(plan,g,x.stage,r.date);const ac=actualCum(plan,x.stage,r.date);const lp=pct(+x.input,plan.lotQty);return `<tr><td>${esc(x.station)}</td><td>${esc(st.name)}</td><td class="n">${num(x.input)}</td><td class="n">${num(ac)}</td><td class="n">${num(pc)}</td><td class="n">${lp.toFixed(0)}%</td><td style="width:120px"><div class="bar ${lp>=100?'ok':''}"><i style="width:${Math.min(100,lp)}%"></i></div></td></tr>`}).join('')}</tbody></table></div></div>`;
+  }
+  const hist=`<div class="card"><h3>${t('pq_hist')}</h3><div class="tw"><table><thead><tr><th>${t('l_date')}</th><th>${t('pq_shift')}</th><th>${t('l_project')}</th><th>${t('pq_by')}</th><th class="n">${t('pq_fatp')}</th></tr></thead><tbody>${list.map(x=>{const pk=(x.sections||[]).filter(s=>!s.hold).flatMap(s=>s.rows).filter(y=>/gift\s*box/i.test(y.station)).reduce((a,y)=>a+(+y.input||0),0);return `<tr data-a="pickQa" data-id="${x.id}" style="cursor:pointer;${x.id===r.id?'font-weight:600':''}"><td>${fd(x.date)} ${esc(x.time||'')}</td><td>${esc(x.shift||'')}</td><td>${esc(x.project||'')}</td><td>${esc(x.reporter||'')}</td><td class="n">${num(pk)}</td></tr>`}).join('')}</tbody></table></div></div>`;
+  return head+`<div class="meta muted">${t('pq_report')}: ${esc(r.project||'')} · ${fdw(r.date)} ${esc(r.time||'')} · ${t('pq_shift')} ${esc(r.shift||'')} · ${esc(r.reporter||'')}${r.source?' · '+esc(r.source):''}</div>`+kp+
+    `<div class="card"><div class="tw"><table><thead><tr><th>${t('pq_part')}</th><th>${t('pq_station')}</th><th class="n">${t('pq_input')}</th><th class="n">${t('pq_p1')}</th><th class="n">${t('pq_f1')}</th><th class="n">${t('pq_p2')}</th><th class="n">${t('pq_f2')}</th><th class="n">${t('pq_y1')}</th><th class="n">${t('pq_y2')}</th><th class="n">${t('pq_rt')}</th><th class="n">${t('pq_rw')}</th><th class="n">${t('pq_ntf')}</th><th>${t('pq_note')}</th></tr></thead><tbody>${(r.sections||[]).map(rowsHTML).join('')}</tbody></table></div>${ownerOnly(`<div class="row" style="margin-top:10px"><button class="btn sm" data-a="mapQa" data-id="${r.id}">${t('pq_stage')}</button><button class="btn sm" data-a="delDoc" data-col="qa" data-id="${r.id}">${S.delArm===r.id?t('confirmDel'):t('btn_delete')}</button></div>`)}</div>`+vs+hist;
+}
+
+/* production plan */
+function vDpr(){
+  const plans=S.plans.slice().sort((a,b)=>(b.startDate||'').localeCompare(a.startDate||''));
+  const head=top(t('nav_dpr'),'',ownerOnly(`<button class="btn" data-a="newPlan">${t('btn_newplan')}</button>`));
+  if(!plans.length)return head+`<div class="card empty">${t('d_none')}</div>`;
+  const p=plans.find(x=>x.id===S.planId)||plans[0];
+  const tabs=plans.length>1?`<div class="tabs">${plans.map(x=>`<button class="${x.id===p.id?'on':''}" data-a="pickPlan" data-id="${x.id}">${esc(x.name)}</button>`).join('')}</div>`:'';
+  const A=analysePlan(p);const g=A.g;const base=genPlan(p,'baseline');
+  const fin=p.stages.find(s=>s.key===A.fin)||{};const done=actualCum(p,A.fin);
+  const kp=`<div class="kpis"><div class="kpi"><div class="v">${num(p.lotQty)}</div><div class="l">${t('d_lot')}</div></div><div class="kpi"><div class="v">${num(done)}</div><div class="l">${t('d_done')} · ${esc(fin.name||'')}</div></div><div class="kpi"><div class="v">${pct(done,p.lotQty).toFixed(0)}%</div><div class="l">${t('d_pct')}</div></div><div class="kpi ${A.gap?'bad':'ok'}"><div class="v">${fd(g.res[A.fin]&&g.res[A.fin].finish)}</div><div class="l">${t('d_finish')}</div></div></div>`;
+  const msl=A.ms.map(m=>`<span class="pill ${m.short&&m.d>=TODAY?'bad':m.short?'warn':'ok'}">${esc(m.label||'')} ${t('d_msLine',{q:num(m.qty),d:fd(m.d)})} · ${m.short?t('d_short',{n:num(m.short)})+' · ':''}${m.reach?t('d_reach',{d:fd(m.reach)}):t('d_noReach')}</span>`).join(' ');
+  const sg=A.gap?`<div class="sugg"><b>${t('d_gap')}: ${esc(A.gap.label||'')} ${t('d_msLine',{q:num(A.gap.qty),d:fd(A.gap.d)})}</b>${A.sugg.map(s=>`<div>• ${s.type==='cap'?t('d_sCap',{st:esc(s.st),a:s.a,b:s.b,p:s.p}):s.type==='days'?t('d_sDays',{n:s.n,d:fd(s.d),m:esc(s.m)}):t('d_sDelay',{d:fd(s.d)})}</div>`).join('')}</div>`:`<div class="sugg ok">${t('d_ok')}</div>`;
+  const stbl=`<div class="card"><div class="tw"><table><thead><tr><th>${t('d_stage')}</th><th class="n">${t('d_target')}</th><th class="n">${t('d_actual')}</th><th>${t('d_pct')}</th><th class="n">${t('d_today')}</th><th class="n">${t('d_cap')}</th><th>${t('d_finish')}</th></tr></thead><tbody>${p.stages.map(s=>{const a=actualCum(p,s.key);const pc=pct(a,s.target);return `<tr><td><b>${esc(s.name)}</b></td><td class="n">${num(s.target)}</td><td class="n">${num(a)}</td><td style="min-width:110px"><div class="row" style="flex-wrap:nowrap"><div class="bar ${pc>=100?'ok':''}" style="flex:1"><i style="width:${Math.min(100,pc)}%"></i></div><span class="mono" style="font-size:12px">${pc.toFixed(0)}%</span></div></td><td class="n">${num(g.res[s.key].daily[TODAY]||0)}</td><td class="n">${num(s.cap)}</td><td>${fd(g.res[s.key].finish)}</td></tr>`}).join('')}</tbody></table></div></div>`;
+  let days=g.days;if(!S.gridAll){const a=addDays(TODAY,-10),b=addDays(TODAY,30);days=days.filter(d=>d>=a&&d<=b)}
+  const evMap={};(p.events||[]).forEach(e=>evMap[e.d]=e.label);const holMap={};(p.holidays||[]).forEach(h=>holMap[h.d]=h.label);
+  const hdr=`<tr><th class="sl">${t('d_stage')}</th>${days.map(d=>`<th class="${d===TODAY?'today':''}" title="${esc(holMap[d]||evMap[d]||'')}">${fd(d)}<br><span class="muted">${t('wd'+dow(d))}</span>${holMap[d]?`<br><span class="hl">${esc(holMap[d].slice(0,10))}</span>`:''}${evMap[d]?`<br><span class="hl">◆</span>`:''}</th>`).join('')}</tr>`;
+  const body=p.stages.map(s=>{
+    const act=(p.actuals||{})[s.key]||{};const tp=((p.tsmtPlan||{})[s.key])||{};
+    const plRow=`<tr class="pl"><td class="sl"><b>${esc(s.name)}</b> <span class="muted">${t('d_fc')}</span></td>${days.map(d=>{const v=d<TODAY?(base.res[s.key].daily[d]||0):(g.res[s.key].daily[d]||0);return `<td class="${g.isWork(d)?'':'off'} ${d===TODAY?'today':''}">${v||''}</td>`}).join('')}</tr>`;
+    const tRow=S.showBase&&Object.keys(tp).length?`<tr class="pl"><td class="sl muted">${t('d_tsmt')}</td>${days.map(d=>`<td class="${g.isWork(d)?'':'off'} ${d===TODAY?'today':''}">${tp[d]||''}</td>`).join('')}</tr>`:'';
+    const aRow=`<tr class="act"><td class="sl">${t('d_actual')}</td>${days.map(d=>{const v=act[d];const pv=base.res[s.key].daily[d]||0;const cls=d<=TODAY&&v!=null&&pv?(v<pv?'under':v>pv?'over':''):'';
+      if(S.isOwner&&d<=TODAY)return `<td class="${g.isWork(d)?'':'off'} ${d===TODAY?'today':''} ${cls}"><input data-cell="1" data-plan="${p.id}" data-stage="${s.key}" data-d="${d}" value="${v??''}" inputmode="numeric" aria-label="${esc(s.name)} ${d}"></td>`;
+      return `<td class="${g.isWork(d)?'':'off'} ${d===TODAY?'today':''} ${cls}">${v??''}</td>`}).join('')}</tr>`;
+    return plRow+tRow+aRow;
+  }).join('');
+  const evs=(p.events||[]).length?`<div class="muted" style="font-size:12.5px">◆ ${p.events.map(e=>fd(e.d)+' '+esc(e.label)).join(' · ')}</div>`:'';
+  return head+tabs+`<div class="meta muted">${esc(p.project||'')} · ${esc(p.customer||'')} · ${t('d_start')} ${fd(p.startDate)}${p.note?' · '+esc(p.note):''}</div>`+kp+
+    `<div class="card"><h3>${t('d_ms')}</h3><div class="row">${msl||'—'}</div><div style="margin-top:10px">${sg}</div></div>`+stbl+
+    `<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><span class="muted" style="font-size:12.5px;max-width:70ch">${t('d_help')}</span><div class="row"><button class="btn sm" data-a="gridAll">${S.gridAll?t('btn_window'):t('btn_allDates')}</button>${p.tsmtPlan?`<button class="btn sm ${S.showBase?'pri':''}" data-a="showBase">${t('d_tsmt')}</button>`:''}${ownerOnly(`<button class="btn sm" data-a="planSettings" data-id="${p.id}">${t('btn_settings')}</button>`)}</div></div>${evs}<div class="tw"><table class="grid"><thead>${hdr}</thead><tbody>${body}</tbody></table></div></div>`;
+}
+
+/* issues */
+function issueCard(i){
+  const od=i.status!=='closed'&&i.dueDate&&i.dueDate<TODAY;
+  return `<div class="card issue" id="c_${i.id}"><div class="ihead"><div><div class="it2">${esc(i.topic)}</div><div class="muted">${esc(i.project||'')}${i.lot?' · '+esc(i.lot):''} · ${esc(i.owners||'')}</div></div>
+   <div class="row"><span class="pill ${i.status==='closed'?'ok':i.status==='progress'?'acc':''}">${t('st_'+i.status)}</span><span class="pill ${i.priority==='high'?'bad':i.priority==='med'?'warn':''}">${t('pr_'+(i.priority||'med'))}</span>${i.category?`<span class="pill">${t('ic_'+i.category)}</span>`:''}<span class="pill ${od?'bad':''}">${t('l_due')} ${fd(i.dueDate)}</span></div></div>
+   ${latestHTML(i)}${i.status==='closed'&&i.closeReason?`<div class="muted">${t('l_reason')}: ${esc(i.closeReason)}</div>`:''}
+   ${logHTML(i,'issues')}
+   ${ownerOnly(`<div class="row"><button class="btn sm" data-a="editIssue" data-id="${i.id}">${t('btn_edit')}</button>${i.status!=='closed'?`<button class="btn sm" data-a="closeIssue" data-id="${i.id}">${t('btn_close')}</button>`:`<button class="btn sm" data-a="reopen" data-id="${i.id}">${t('btn_reopen')}</button>`}</div>`)}</div>`;
+}
+function vIssues(){
+  let l=S.issues.slice();if(S.issueFilter==='active')l=l.filter(i=>i.status!=='closed');else if(S.issueFilter==='done')l=l.filter(i=>i.status==='closed');
+  const projs=[...new Set(S.issues.map(i=>i.project).filter(Boolean))];
+  if(S.issueProj!=='all')l=l.filter(i=>i.project===S.issueProj);
+  const pr={high:0,med:1,low:2};l.sort((a,b)=>(pr[a.priority]??1)-(pr[b.priority]??1)||(a.dueDate||'9').localeCompare(b.dueDate||'9'));
+  const by={};l.forEach(i=>{(by[i.project||'—']=by[i.project||'—']||[]).push(i)});
+  return top(t('nav_issues'),'',ownerOnly(`<button class="btn pri" data-a="editIssue">${t('new_issue')}</button>`))+
+    `<div class="row">${chips('issueFilter',S.issueFilter,[['active',t('f_active')],['done',t('st_closed')],['all',t('f_all')]])}${chips('issueProj',S.issueProj,[['all',t('f_all')]].concat(projs.map(p=>[p,p])))}</div>`+
+    (Object.keys(by).length?Object.keys(by).map(k=>`<div class="grp">${esc(k)}</div>`+by[k].map(issueCard).join('')).join(''):`<div class="card empty">${t('nothing')}</div>`);
+}
+function vReport(){
+  const m=S.month;const inM=d=>d&&d.slice(0,7)===m;
+  const closed=S.issues.filter(i=>i.status==='closed'&&inM(i.closeDate));
+  const opened=S.issues.filter(i=>inM(i.openDate));
+  const still=S.issues.filter(i=>i.status!=='closed').map(i=>Object.assign({age:i.openDate?diff(i.openDate,TODAY):null},i)).sort((a,b)=>(b.age||0)-(a.age||0));
+  const avg=closed.length?Math.round(closed.reduce((a,i)=>a+(i.openDate?diff(i.openDate,i.closeDate):0),0)/closed.length):0;
+  const ships=S.shipments.filter(s=>s.stage>=7&&inM(s.etaActual||lastLog(s)&&lastLog(s).d));
+  const obs=S.outbound.filter(o=>o.stage>=4&&inM(o.shipActual));
+  const tbl=(h,rows)=>`<div class="tw"><table><thead><tr>${h.map(x=>`<th class="${x[1]||''}">${x[0]}</th>`).join('')}</tr></thead><tbody>${rows||`<tr><td colspan="${h.length}" class="muted">${t('r_none')}</td></tr>`}</tbody></table></div>`;
+  return top(t('nav_report'),'',`<label class="fl">${t('r_month')}<input type="month" id="monthPick" value="${m}"></label>`)+
+    `<div class="kpis"><div class="kpi ok"><div class="v">${closed.length}</div><div class="l">${t('r_closed')}</div></div><div class="kpi"><div class="v">${opened.length}</div><div class="l">${t('r_opened')}</div></div><div class="kpi"><div class="v">${avg}</div><div class="l">${t('r_avg')}</div></div><div class="kpi warn"><div class="v">${still.length}</div><div class="l">${t('r_stillOpen')}</div></div></div>`+
+    `<div class="card"><h3>${t('r_closed')}</h3>${tbl([[t('l_topic')],[t('l_project')],[t('l_opened')],[t('l_closed')],[t('r_days'),'n'],[t('l_reason')]],closed.map(i=>`<tr><td><b>${esc(i.topic)}</b></td><td>${esc(i.project||'')}</td><td>${fd(i.openDate)}</td><td>${fd(i.closeDate)}</td><td class="n">${i.openDate?diff(i.openDate,i.closeDate):'—'}</td><td>${esc(i.closeReason||'')}</td></tr>`).join(''))}</div>`+
+    `<div class="card"><h3>${t('r_stillOpen')}</h3>${tbl([[t('l_topic')],[t('l_project')],[t('l_opened')],[t('r_age'),'n'],[t('l_latest')]],still.map(i=>{const l=lastLog(i);return `<tr><td><b>${esc(i.topic)}</b></td><td>${esc(i.project||'')}</td><td>${fd(i.openDate)}</td><td class="n ${i.age>30?'late':''}">${i.age??'—'}</td><td>${l?`<span class="mono muted">${fd(l.d)}</span> ${esc(l.text)}`:''}</td></tr>`}).join(''))}</div>`+
+    `<div class="card"><h3>${t('r_ships')}</h3>${tbl([[t('l_topic')],[t('l_route')],[t('l_etd')],[t('l_eta')],[t('r_transit'),'n'],[t('r_etaDelay'),'n']],ships.map(s=>`<tr><td><b>${esc(s.title)}</b></td><td>${esc(s.from||'')} → ${esc(s.to||'')}</td><td>${fd(s.etdActual||s.etdPlan)}</td><td>${fd(s.etaActual)}</td><td class="n">${s.etdActual&&s.etaActual?diff(s.etdActual,s.etaActual):'—'}</td><td class="n ${shipLate(s)?'late':''}">${shipLate(s)||0}</td></tr>`).join('')+obs.map(o=>`<tr><td><b>${esc(o.customer)} · ${esc(o.model||'')} · ${num(o.qty)}</b></td><td>TSMT → ${esc(o.dest||'')}</td><td>${fd(o.shipActual)}</td><td>${fd(o.eta)}</td><td class="n">—</td><td class="n">${o.shipPlan&&o.shipActual?Math.max(0,diff(o.shipPlan,o.shipActual)):'—'}</td></tr>`).join(''))}</div>`;
+}
+
+/* ---------- forms & modal ---------- */
+function field(f,v){
+  const id='f_'+f.k;const val=v==null?'':v;const lab=`<span>${esc(f.label)}</span>`;const cls=f.wide?'wide':'';
+  if(f.type==='select')return `<label class="${cls}">${lab}<select id="${id}">${f.opts.map(([a,b])=>`<option value="${esc(a)}" ${String(a)===String(val)?'selected':''}>${esc(b)}</option>`).join('')}</select></label>`;
+  if(f.type==='textarea')return `<label class="${cls}">${lab}<textarea id="${id}">${esc(val)}</textarea></label>`;
+  return `<label class="${cls}">${lab}<input id="${id}" type="${f.type||'text'}" value="${esc(val)}"></label>`;
+}
+function readF(fields){const o={};fields.forEach(f=>{const el=document.getElementById('f_'+f.k);if(!el)return;let v=el.value;if(f.type==='number')v=v===''?null:Number(v);if(f.k==='stage')v=Number(v);o[f.k]=v});return o}
+function modal(title,body,onSave,extra){
+  const root=document.getElementById('modalRoot');
+  root.innerHTML=`<div class="modal-bg" data-a="bgClose"><div class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><h4>${esc(title)}</h4>${body}<div class="err" id="mErr"></div><div class="mact">${extra||''}<button class="btn" data-a="mClose">${t('btn_cancel')}</button><button class="btn pri" id="mSave">${t('btn_save')}</button></div></div></div>`;
+  document.getElementById('mSave').onclick=async()=>{try{const r=await onSave();if(r!==false)closeModal()}catch(e){document.getElementById('mErr').textContent=t('saveErr',{x:e.code||e.message||e})}};
+  const first=root.querySelector('input,select,textarea');if(first)first.focus();
+}
+function closeModal(){document.getElementById('modalRoot').innerHTML=''}
+
+const shipFields=()=>[
+ {k:'title',label:t('l_topic'),wide:true},{k:'category',label:t('l_cat'),type:'select',opts:CATS.map(c=>[c,t('c_'+c)])},
+ {k:'project',label:t('l_project')},{k:'lot',label:t('l_lot')},{k:'process',label:t('l_process'),type:'select',opts:[['','—']].concat(PROCESS.map(p=>[p,p]))},
+ {k:'from',label:t('l_route')+' (from)'},{k:'to',label:t('l_route')+' (to)'},{k:'mode',label:t('l_mode'),type:'select',opts:[['',''],['Air','Air'],['Sea','Sea'],['Courier','Courier (DHL/FedEx)'],['Truck','Truck'],['Hand carry','Hand carry']]},
+ {k:'terms',label:t('l_terms'),type:'select',opts:[['',''],['Buy & Sale','Buy & Sale'],['Consign / FOC','Consign / FOC']]},{k:'costBearer',label:t('l_cost')},
+ {k:'po',label:t('l_po')},{k:'invoice',label:t('l_inv')},{k:'qty',label:t('l_qty'),type:'number'},{k:'owner',label:t('l_owner')},
+ {k:'stage',label:t('l_status'),type:'select',opts:[[-1,'—']].concat(STEPS.map((s,i)=>[i,t('s_'+s)]))},
+ {k:'alert',label:t('l_alert'),type:'select',opts:[['',''],['short',t('m_short')],['late',t('m_late')]]},
+ {k:'readyDate',label:t('l_ready'),type:'date'},{k:'etdPlan',label:t('l_etd')+' '+t('l_plan'),type:'date'},{k:'etdActual',label:t('l_etd')+' '+t('l_act'),type:'date'},
+ {k:'etaPlan',label:t('l_eta')+' '+t('l_plan'),type:'date'},{k:'etaActual',label:t('l_eta')+' '+t('l_act'),type:'date'}];
+const obFields=()=>[{k:'customer',label:t('l_customer')},{k:'model',label:t('l_model')},{k:'project',label:t('l_project')},{k:'lot',label:t('l_lot')},{k:'qty',label:t('l_qty'),type:'number'},{k:'dest',label:t('l_dest')},
+ {k:'mode',label:t('l_mode'),type:'select',opts:[['',''],['Air','Air'],['Sea','Sea'],['Courier','Courier'],['Truck','Truck']]},{k:'stage',label:t('l_status'),type:'select',opts:[[-1,'—']].concat(OB_STEPS.map((s,i)=>[i,t('o_'+s)]))},
+ {k:'shipPlan',label:t('l_shipPlan'),type:'date'},{k:'shipActual',label:t('l_shipAct'),type:'date'},{k:'eta',label:t('l_eta'),type:'date'},{k:'issue',label:t('l_issue'),wide:true}];
+const issueFields=()=>[{k:'topic',label:t('l_topic'),wide:true},{k:'project',label:t('l_project')},{k:'lot',label:t('l_lot')},{k:'owners',label:t('l_owners'),wide:true},
+ {k:'category',label:t('l_cat2'),type:'select',opts:ISSUE_CATS.map(c=>[c,t('ic_'+c)])},{k:'priority',label:t('l_prio'),type:'select',opts:[['high',t('pr_high')],['med',t('pr_med')],['low',t('pr_low')]]},
+ {k:'status',label:t('l_status'),type:'select',opts:[['open',t('st_open')],['progress',t('st_progress')],['closed',t('st_closed')]]},{k:'openDate',label:t('l_opened'),type:'date'},{k:'dueDate',label:t('l_due'),type:'date'},{k:'closeDate',label:t('l_closed'),type:'date'},{k:'closeReason',label:t('l_reason'),type:'textarea',wide:true}];
+const firstLogField=()=>({k:'firstLog',label:t('l_latest'),type:'textarea',wide:true});
+
+function editDoc(col,id,fields,defaults,title){
+  const cur=id?(S[col].find(x=>x.id===id)||{}):Object.assign({log:[]},defaults);
+  const fl=id?fields:fields.concat([firstLogField()]);
+  modal(title,`<div class="fgrid">${fl.map(f=>field(f,cur[f.k]??(f.k==='stage'?-1:'')))}</div>`,async()=>{
+    const v=readF(fl);const doc=Object.assign(clone(cur),v);delete doc.id;
+    if(!id&&v.firstLog){doc.log=[{d:TODAY,text:v.firstLog}]}delete doc.firstLog;
+    if(col==='issues'&&doc.status==='closed'&&!doc.closeDate)doc.closeDate=TODAY;
+    await put(col,id||newId(col),doc);
+  },id?`<button class="btn" style="margin-right:auto" data-a="delDoc" data-col="${col}" data-id="${id}">${S.delArm===id?t('confirmDel'):t('btn_delete')}</button>`:'');
+}
+function addLog(col,id){
+  modal(t('btn_update'),`<div class="fgrid">${field({k:'d',label:t('l_date'),type:'date'},TODAY)}${field({k:'text',label:t('l_text'),type:'textarea',wide:true},'')}</div>`,async()=>{
+    const v=readF([{k:'d'},{k:'text'}]);if(!v.text.trim())return false;const cur=S[col].find(x=>x.id===id);const log=(cur.log||[]).concat([{d:v.d||TODAY,text:v.text.trim()}]);
+    await patch(col,id,{log});
+  });
+}
+function addBlk(id){
+  const f=[{k:'group',label:t('l_blockers'),type:'select',opts:BLOCKERS.map(b=>[b,t('b_'+b)])},{k:'since',label:t('l_date'),type:'date'},{k:'detail',label:t('l_text'),wide:true}];
+  modal(t('btn_blocker'),`<div class="fgrid">${f.map(x=>field(x,x.k==='since'?TODAY:''))}</div>`,async()=>{
+    const v=readF(f);if(!v.detail.trim())return false;const cur=S.shipments.find(x=>x.id===id);
+    await patch('shipments',id,{blockers:(cur.blockers||[]).concat([{group:v.group,detail:v.detail.trim(),since:v.since||TODAY,done:false}])});
+  });
+}
+function closeIssue(id){
+  const i=S.issues.find(x=>x.id===id);
+  modal(t('btn_close')+': '+i.topic,`<div class="fgrid">${field({k:'closeDate',label:t('l_closed'),type:'date'},TODAY)}${field({k:'closeReason',label:t('l_reason'),type:'textarea',wide:true},i.closeReason||'')}</div>`,async()=>{
+    const v=readF([{k:'closeDate'},{k:'closeReason'}]);const log=(i.log||[]).concat([{d:v.closeDate||TODAY,text:'Closed. '+v.closeReason}]);
+    await patch('issues',id,{status:'closed',closeDate:v.closeDate||TODAY,closeReason:v.closeReason,log});
+  });
+}
+function settingsModal(){
+  const f=[{k:'meetingDay',label:t('mt_meet'),type:'select',opts:[0,1,2,3,4,5,6].map(d=>[d,t('wd'+d)])},{k:'staleDays',label:t('mt_stale'),type:'number'},{k:'window',label:t('mt_win'),type:'number'},{k:'email',label:t('mt_email')}];
+  modal(t('mt_title'),`<div class="fgrid">${f.map(x=>field(x,S.settings[x.k]))}</div>`,async()=>{const v=readF(f);v.meetingDay=+v.meetingDay;await S.db.doc('meta/settings').set(Object.assign({},S.settings,v));toast(t('saved'))});
+}
+function qaModal(){
+  const f=[{k:'date',label:t('l_date'),type:'date'},{k:'time',label:'Time'},{k:'shift',label:t('pq_shift'),type:'select',opts:[['A','A'],['B','B'],['C','C'],['Day','Day'],['Night','Night']]},{k:'project',label:t('l_project')},
+    {k:'planId',label:t('nav_dpr'),type:'select',opts:[['','—']].concat(S.plans.map(p=>[p.id,p.name]))},{k:'reporter',label:t('pq_by')},{k:'section',label:t('pq_section'),wide:true},{k:'paste',label:t('pq_paste'),type:'textarea',wide:true}];
+  const last=S.qa.slice().sort((a,b)=>b.date.localeCompare(a.date))[0]||{};
+  modal(t('btn_addReport'),`<div class="fgrid">${f.map(x=>field(x,{date:TODAY,project:last.project||'',planId:last.planId||'',reporter:last.reporter||'',section:'Overall data'}[x.k]))}<label class="wide" style="flex-direction:row;gap:8px;align-items:center"><input type="checkbox" id="f_hold" style="width:auto"> ${t('pq_isHold')}</label></div>`,async()=>{
+    const v=readF(f);const rows=parseQa(v.paste);if(!rows.length){document.getElementById('mErr').textContent='No rows found.';return false}
+    const ex=S.qa.find(r=>r.date===v.date&&r.shift===v.shift&&r.project===v.project);
+    const sec={name:v.section||'Overall data',hold:document.getElementById('f_hold').checked,rows};
+    if(ex){const d=clone(ex);delete d.id;d.sections=(d.sections||[]).filter(s=>s.name!==sec.name).concat([sec]);await put('qa',ex.id,d)}
+    else await put('qa',newId('qa'),{date:v.date,time:v.time,shift:v.shift,project:v.project,planId:v.planId,reporter:v.reporter,sections:[sec]});
+  });
+}
+function parseQa(txt){
+  const out=[];(txt||'').split(/\r?\n/).forEach(line=>{
+    let c=line.split('\t').map(x=>x.trim());if(c.length<5)return;
+    if(/^\d+$/.test(c[0])&&!/^\d+$/.test(c[1]||''))c=c.slice(1);
+    const n=i=>{const x=String(c[i]||'').replace(/[,%]/g,'');return x===''?0:Number(x)};
+    if(isNaN(n(2)))return;
+    out.push({part:c[0],station:c[1],input:n(2),p1:n(3),f1:n(4),p2:n(5),f2:n(6),rework:n(10)||'',ntf:n(11)||'',note:c.slice(12).join(' ')});
+  });return out;
+}
+function mapQa(id){
+  const r=S.qa.find(x=>x.id===id);const plan=S.plans.find(p=>p.id===r.planId)||S.plans.find(p=>p.project===r.project);if(!plan)return;
+  const rows=[];(r.sections||[]).forEach((s,si)=>s.rows.forEach((x,ri)=>rows.push({si,ri,x,s})));
+  modal(t('pq_stage'),`<div class="tw"><table><tbody>${rows.map(o=>`<tr><td>${esc(o.s.name.slice(0,20))}</td><td>${esc(o.x.station)}</td><td><select id="mp_${o.si}_${o.ri}"><option value="">—</option>${plan.stages.map(st=>`<option value="${st.key}" ${o.x.stage===st.key?'selected':''}>${esc(st.name)}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div>`,async()=>{
+    const d=clone(r);delete d.id;rows.forEach(o=>{d.sections[o.si].rows[o.ri].stage=document.getElementById(`mp_${o.si}_${o.ri}`).value});await put('qa',id,d);
+  });
+}
+function planModal(id){
+  const p=id?clone(S.plans.find(x=>x.id===id)):{name:'',project:'',customer:'',lotQty:6400,startDate:TODAY,workDays:[1,2,3,4,5,6],holidays:[],milestones:[],events:[],finalStage:'PACK',
+    stages:[{key:'SMT',name:'SMT',target:6400,cap:500,pred:'',lag:0,ramp:[50,80]},{key:'ASSY',name:'Assembly',target:6400,cap:350,pred:'SMT',lag:1,ramp:[50,80]},{key:'TEST',name:'Testing',target:6400,cap:350,pred:'ASSY',lag:0,ramp:[]},{key:'PACK',name:'Packing',target:6400,cap:350,pred:'TEST',lag:0,ramp:[]}],actuals:{}};
+  const lines=(arr,fmt)=>(arr||[]).map(fmt).join('\n');
+  const stRow=(s,i)=>`<tr><td><input id="sk_${i}" value="${esc(s.key)}" style="width:70px"></td><td><input id="sn_${i}" value="${esc(s.name)}"></td><td><input id="st_${i}" type="number" value="${s.target}" style="width:80px"></td><td><input id="sc_${i}" type="number" value="${s.cap}" style="width:70px"></td><td><input id="sp_${i}" value="${esc(s.pred||'')}" style="width:70px"></td><td><input id="sl_${i}" type="number" value="${s.lag||0}" style="width:50px"></td><td><input id="sb_${i}" type="date" value="${s.notBefore||''}"></td><td><input id="sr_${i}" value="${(s.ramp||[]).join('/')}" style="width:80px"></td></tr>`;
+  const body=`<div class="fgrid">${field({k:'name',label:t('d_name')},p.name)}${field({k:'project',label:t('l_project')},p.project)}${field({k:'customer',label:t('l_customer')},p.customer)}${field({k:'lotQty',label:t('d_lot'),type:'number'},p.lotQty)}${field({k:'startDate',label:t('d_start'),type:'date'},p.startDate)}${field({k:'finalStage',label:t('d_final')},p.finalStage)}
+   <div class="fl wide"><span>${t('d_wd')}</span><div class="row">${[1,2,3,4,5,6,0].map(d=>`<label style="flex-direction:row;gap:4px;display:flex;align-items:center"><input type="checkbox" id="wd_${d}" style="width:auto" ${(p.workDays||[]).includes(d)?'checked':''}>${t('wd'+d)}</label>`).join('')}</div></div>
+   ${field({k:'holidays',label:t('d_hol')+' (YYYY-MM-DD label)',type:'textarea'},lines(p.holidays,h=>h.d+' '+(h.label||'')))}
+   ${field({k:'milestones',label:t('d_ms')+' (YYYY-MM-DD qty label)',type:'textarea'},lines(p.milestones,m=>m.d+' '+m.qty+' '+(m.label||'')))}
+   ${field({k:'events',label:t('d_events')+' (YYYY-MM-DD label)',type:'textarea',wide:true},lines(p.events,e=>e.d+' '+e.label))}</div>
+   <div class="tw"><table class="stbl"><thead><tr><th>${t('d_key')}</th><th>${t('d_name')}</th><th>${t('d_target')}</th><th>${t('d_cap')}</th><th>${t('d_pred')}</th><th>Lag</th><th>${t('d_nb')}</th><th>${t('d_ramp')}</th></tr></thead><tbody id="stBody">${p.stages.map(stRow).join('')}</tbody></table></div>
+   <div class="row"><button class="btn sm" id="addStage">+ ${t('d_stage')}</button></div>`;
+  modal(id?t('btn_settings'):t('btn_newplan'),body,async()=>{
+    const v=readF([{k:'name'},{k:'project'},{k:'customer'},{k:'lotQty',type:'number'},{k:'startDate'},{k:'finalStage'},{k:'holidays'},{k:'milestones'},{k:'events'}]);
+    const pl=s=>s.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+    p.name=v.name||'Lot plan';p.project=v.project;p.customer=v.customer;p.lotQty=v.lotQty||0;p.startDate=v.startDate||TODAY;p.finalStage=v.finalStage;
+    p.workDays=[0,1,2,3,4,5,6].filter(d=>document.getElementById('wd_'+d).checked);
+    p.holidays=pl(v.holidays).map(x=>{const[d,...r]=x.split(/\s+/);return {d,label:r.join(' ')}}).filter(h=>/^\d{4}-\d\d-\d\d$/.test(h.d));
+    p.milestones=pl(v.milestones).map(x=>{const[d,q,...r]=x.split(/\s+/);return {d,qty:Number(q)||0,label:r.join(' ')}}).filter(h=>/^\d{4}-\d\d-\d\d$/.test(h.d));
+    p.events=pl(v.events).map(x=>{const[d,...r]=x.split(/\s+/);return {d,label:r.join(' ')}}).filter(h=>/^\d{4}-\d\d-\d\d$/.test(h.d));
+    const n=document.querySelectorAll('#stBody tr').length;const st=[];
+    for(let i=0;i<n;i++){const k=document.getElementById('sk_'+i).value.trim();if(!k)continue;st.push({key:k,name:document.getElementById('sn_'+i).value.trim()||k,target:+document.getElementById('st_'+i).value||0,cap:+document.getElementById('sc_'+i).value||0,pred:document.getElementById('sp_'+i).value.trim(),lag:+document.getElementById('sl_'+i).value||0,notBefore:document.getElementById('sb_'+i).value||'',ramp:document.getElementById('sr_'+i).value.split('/').map(Number).filter(x=>x>0)})}
+    p.stages=st;if(!st.some(s=>s.key===p.finalStage)&&st.length)p.finalStage=st[st.length-1].key;
+    const did=id||newId('plans');delete p.id;await put('plans',did,p);S.planId=did;
+  });
+  document.getElementById('addStage').onclick=e=>{e.preventDefault();const b=document.getElementById('stBody');const i=b.querySelectorAll('tr').length;b.insertAdjacentHTML('beforeend',stRow({key:'',name:'',target:p.lotQty||0,cap:0,pred:'',lag:0,ramp:[]},i))};
+}
+
+/* ---------- actions ---------- */
+const ACT={
+  lang:d=>{lang=d.v;try{localStorage.setItem('tsmt_lang',lang)}catch(e){}document.documentElement.lang=lang==='zh'?'zh-Hant':'en';renderAll()},
+  nav:d=>{S.view=d.v;try{history.replaceState(null,'','#'+d.v)}catch(e){}renderAll();window.scrollTo(0,0)},
+  go:d=>{if(d.go==='today')return;ACT.nav({v:d.go});if(d.id){S.open.add(d.id);if(d.go==='dpr')S.planId=d.id;setTimeout(()=>{const el=document.getElementById('c_'+d.id);if(el){el.scrollIntoView({block:'start',behavior:'smooth'});el.style.outline='2px solid var(--accent)';setTimeout(()=>el.style.outline='',1600)}},60)}},
+  filter:d=>{S[d.k]=d.v;renderMain()},
+  toggle:d=>{S.open.has(d.id)?S.open.delete(d.id):S.open.add(d.id);renderMain()},
+  addLog:d=>addLog(d.col,d.id),addBlk:d=>addBlk(d.id),
+  resolveBlk:async(d,el,e)=>{e.preventDefault();const s=S.shipments.find(x=>x.id===d.id);const b=clone(s.blockers);const it=b[+d.i];it.done=true;it.doneDate=TODAY;await patch('shipments',d.id,{blockers:b,log:(s.log||[]).concat([{d:TODAY,text:'Resolved: '+t('b_'+it.group)+' – '+it.detail}])})},
+  nextStep:async d=>{const col=d.col;const o=S[col].find(x=>x.id===d.id);const steps=col==='shipments'?STEPS:OB_STEPS;const ns=(o.stage??-1)+1;const up={stage:ns};
+    if(col==='shipments'){if(steps[ns]==='shipped'&&!o.etdActual)up.etdActual=TODAY;if(steps[ns]==='arrived'&&!o.etaActual)up.etaActual=TODAY}
+    else if(steps[ns]==='shipped'&&!o.shipActual)up.shipActual=TODAY;
+    up.log=(o.log||[]).concat([{d:TODAY,text:'→ '+t((col==='shipments'?'s_':'o_')+steps[ns])}]);await patch(col,d.id,up)},
+  editShip:d=>editDoc('shipments',d.id,shipFields(),{category:d.cat||'material',stage:-1,blockers:[]},d.id?t('btn_edit'):t('new_ship')),
+  editOb:d=>editDoc('outbound',d.id,obFields(),{stage:0},d.id?t('btn_edit'):t('new_ob')),
+  editIssue:d=>editDoc('issues',d.id,issueFields(),{status:'open',priority:'med',category:'other',openDate:TODAY},d.id?t('btn_edit'):t('new_issue')),
+  closeIssue:d=>closeIssue(d.id),
+  reopen:async d=>{const i=S.issues.find(x=>x.id===d.id);await patch('issues',d.id,{status:'progress',closeDate:'',log:(i.log||[]).concat([{d:TODAY,text:'Reopened'}])})},
+  delDoc:async d=>{if(S.delArm!==d.id){S.delArm=d.id;const b=document.querySelector(`[data-a="delDoc"][data-id="${d.id}"]`);if(b)b.textContent=t('confirmDel');return}S.delArm=null;closeModal();await del(d.col,d.id)},
+  todoAdd:async()=>{const tx=document.getElementById('todoText').value.trim();if(!tx)return;await put('todos',newId('todos'),{text:tx,due:document.getElementById('todoDue').value||'',done:false,created:TODAY})},
+  todoDone:async d=>patch('todos',d.id,{done:true,doneDate:TODAY}),
+  settings:()=>settingsModal(),addQa:()=>qaModal(),mapQa:d=>mapQa(d.id),
+  pickQa:d=>{S.qaId=d.id;renderMain()},pickPlan:d=>{S.planId=d.id;renderMain()},
+  gridAll:()=>{S.gridAll=!S.gridAll;renderMain()},showBase:()=>{S.showBase=!S.showBase;renderMain()},
+  newPlan:()=>planModal(null),planSettings:d=>planModal(d.id),
+  mClose:()=>closeModal(),bgClose:(d,el,e)=>{if(e.target===el)closeModal()}
+};
+document.addEventListener('click',e=>{const a=e.target.closest('[data-a]');if(!a)return;const f=ACT[a.dataset.a];if(f){if(a.tagName==='A')e.preventDefault();f(a.dataset,a,e)}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+document.addEventListener('change',async e=>{
+  const el=e.target;
+  if(el.id==='monthPick'){S.month=el.value||TODAY.slice(0,7);renderMain();return}
+  if(el.dataset&&el.dataset.cell){const v=el.value.trim();const val=v===''?null:Number(v);if(v!==''&&isNaN(val))return;
+    const p=S.plans.find(x=>x.id===el.dataset.plan);const act=clone(p.actuals||{});act[el.dataset.stage]=act[el.dataset.stage]||{};
+    if(val==null)delete act[el.dataset.stage][el.dataset.d];else act[el.dataset.stage][el.dataset.d]=val;
+    const doc=clone(p);delete doc.id;doc.actuals=act;await put('plans',p.id,doc)}
+});
+function route(){const h=(location.hash||'').slice(1);S.view=VIEWS.includes(h)?h:'today';renderAll()}
+window.addEventListener('hashchange',route);
+document.documentElement.lang=lang==='zh'?'zh-Hant':'en';
+route();boot();
+})();
+</script>

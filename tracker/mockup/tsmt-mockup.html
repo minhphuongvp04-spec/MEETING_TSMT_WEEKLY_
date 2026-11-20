@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TSMT Desk – Phác thảo giao diện</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/* Phác thảo tĩnh: nền xám nhạt, khối trắng bo góc, xanh lá Arcadyan làm điểm nhấn, mỗi dự án một màu */
+:root{
+  --canvas:#F3F5F2; --card:#FFFFFF; --ink:#1B2420; --muted:#6B7685; --line:#E4E8E2;
+  --brand:#7AB83E; --brand-deep:#4F8A1E; --brand-soft:#EEF6E4; --slate:#7C88A0;
+  --p-dragon:#4F8A1E; --p-dragon-soft:#EAF4DF;
+  --p-mesh:#2F6FD6; --p-mesh-soft:#E5EEFC;
+  --p-pts:#D9822B; --p-pts-soft:#FCEFE1;
+  --bad:#D64545; --bad-soft:#FCE8E8; --warn:#C27C0E; --warn-soft:#FDF2DD; --ok:#2E8B57; --ok-soft:#E3F3EA;
+  --font:"Plus Jakarta Sans","Noto Sans TC",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+body{background:#DCE1DA;font-family:var(--font);color:var(--ink);font-size:14px;line-height:1.5;padding:32px 24px 64px;display:flex;flex-direction:column;gap:40px;align-items:center}
+.caption{width:1240px;max-width:100%;display:flex;align-items:baseline;gap:12px}
+.caption b{font-size:20px} .caption span{color:#4C5650}
+.frame{width:1240px;background:var(--canvas);border-radius:22px;box-shadow:0 20px 60px rgba(30,40,30,.18);display:grid;grid-template-columns:248px 1fr;overflow:hidden;min-height:820px}
+/* sidebar */
+.side{background:var(--card);border-right:1px solid var(--line);padding:22px 16px;display:flex;flex-direction:column;gap:18px}
+.logo{display:flex;align-items:center;gap:10px;padding:0 6px}
+.logo .mark{width:36px;height:36px;border-radius:10px;background:var(--brand);display:grid;place-items:center;color:#fff;font-weight:800}
+.logo b{font-size:16px;display:block;line-height:1.2} .logo small{color:var(--muted);font-size:12px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.ni{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:10px;color:#3B4540;font-weight:500}
+.ni svg{width:19px;height:19px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ni .lbl{flex:1} .ni .c{font-size:12px;background:var(--canvas);border-radius:8px;padding:0 7px;color:var(--muted)}
+.ni.on{background:var(--brand-soft);color:var(--brand-deep);font-weight:700}
+.ni.on .c{background:var(--brand);color:#fff}
+.ni .chev{width:14px;height:14px}
+.sub{display:flex;flex-direction:column;gap:1px;margin:2px 0 6px 21px;padding-left:12px;border-left:1.5px solid var(--line)}
+.si{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:8px;color:#4A544F;font-size:13.5px}
+.si i{width:9px;height:9px;border-radius:3px;flex:none}
+.si .c{margin-left:auto;font-size:12px;color:var(--muted)}
+.si.on{background:var(--canvas);font-weight:600;color:var(--ink)}
+.sep{font-size:12px;color:var(--muted);padding:8px 10px 2px;display:flex;align-items:center;gap:6px}
+.sideFoot{margin-top:auto;display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:var(--canvas)}
+.av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#9CCB6B,#4F8A1E);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+/* main */
+.main{padding:22px 28px;display:flex;flex-direction:column;gap:20px;min-width:0}
+.topbar{display:flex;align-items:center;gap:12px}
+.search{flex:1;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 14px;color:#98A19C;display:flex;gap:8px;align-items:center}
+.search svg{width:16px;height:16px;stroke:#98A19C;fill:none;stroke-width:2}
+.langs{margin-left:auto;display:flex;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:3px}
+.langs span{padding:4px 10px;border-radius:7px;font-size:13px;color:var(--muted)}
+.langs span.on{background:var(--ink);color:#fff}
+.btn{border-radius:11px;padding:9px 16px;font-weight:600;font-size:13.5px;display:inline-flex;gap:7px;align-items:center;border:1px solid var(--line);background:var(--card)}
+.btn.pri{background:var(--brand-deep);border-color:var(--brand-deep);color:#fff}
+.btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.card{background:var(--card);border-radius:18px;padding:20px;border:1px solid var(--line)}
+.card h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.card h3 .more{margin-left:auto;font-size:13px;color:var(--brand-deep);font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+.chip.bad{background:var(--bad-soft);color:var(--bad)} .chip.warn{background:var(--warn-soft);color:var(--warn)} .chip.ok{background:var(--ok-soft);color:var(--ok)} .chip.gray{background:var(--canvas);color:var(--muted)}
+.chip.dragon{background:var(--p-dragon-soft);color:var(--p-dragon)} .chip.mesh{background:var(--p-mesh-soft);color:var(--p-mesh)} .chip.pts{background:var(--p-pts-soft);color:var(--p-pts)}
+.muted{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+/* screen 1 */
+.hero{border-radius:22px;overflow:hidden;position:relative;background:linear-gradient(120deg,#E9F4DC 0%,#F7FBF2 55%,#FFFFFF 100%);border:1px solid var(--line);display:grid;grid-template-columns:1fr 380px;min-height:200px}
+.hero .txt{padding:28px 30px;display:flex;flex-direction:column;gap:10px;justify-content:center}
+.hero h1{font-size:30px;font-weight:800;letter-spacing:-.01em;line-height:1.15}
+.hero h1 em{font-style:normal;font-family:"Noto Sans TC",sans-serif;font-weight:700;color:var(--brand-deep);margin-left:6px}
+.hero p{color:#4A544F;max-width:46ch}
+.hero .stats{display:flex;gap:10px;margin-top:6px}
+.hero .stat{background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:14px;padding:8px 14px}
+.hero .stat b{font-size:20px;display:block;line-height:1.2} .hero .stat span{font-size:12px;color:var(--muted)}
+.hero .art{position:relative}
+.projects{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.proj{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.proj .cover{height:96px;position:relative}
+.proj .body{padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.proj .ttl{display:flex;align-items:center;gap:10px}
+.proj .ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;margin-top:-34px;border:3px solid #fff;flex:none}
+.proj .ic svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2}
+.proj b{font-size:15.5px}
+.proj .meta{display:flex;gap:6px;flex-wrap:wrap}
+.proj .bar{height:6px;background:var(--canvas);border-radius:4px;overflow:hidden} .proj .bar i{display:block;height:100%}
+.cols2{display:grid;grid-template-columns:1fr 330px;gap:20px;align-items:start}
+.oi{display:grid;grid-template-columns:4px 1fr auto;gap:14px;padding:14px 0;border-top:1px solid var(--line)}
+.oi:first-of-type{border-top:0}
+.oi .stripe{border-radius:4px}
+.oi .t{font-weight:600;font-size:14.5px}
+.oi .l{font-size:13px;color:#4A544F;margin-top:3px}
+.oi .l .d{color:var(--muted);margin-right:6px}
+.oi .r{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.tabs{display:flex;gap:6px;margin-bottom:6px}
+.tabs span{padding:6px 12px;border-radius:9px;font-size:13px;font-weight:600;color:var(--muted)}
+.tabs span.on{background:var(--ink);color:#fff}
+.mine{background:linear-gradient(160deg,#2F4A22,#1E3317);color:#fff;border:0}
+.mine h3{color:#fff} .mine .muted{color:#BFD6AE}
+.task{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid rgba(255,255,255,.12);font-size:13.5px}
+.task:first-of-type{border-top:0}
+.task .bx{width:17px;height:17px;border-radius:5px;border:1.5px solid #9CCB6B;flex:none;margin-top:2px}
+.ownerTag{font-size:11.5px;background:rgba(255,255,255,.14);padding:2px 8px;border-radius:999px;margin-left:auto;font-weight:600}
+.cal{display:flex;flex-direction:column;gap:10px}
+.cal .day{display:grid;grid-template-columns:44px 1fr;gap:10px}
+.cal .dd{background:var(--canvas);border-radius:12px;text-align:center;padding:5px 0;line-height:1.15}
+.cal .dd b{font-size:17px;display:block} .cal .dd span{font-size:11px;color:var(--muted)}
+.cal .dd.today{background:var(--brand-deep);color:#fff} .cal .dd.today span{color:#D8EBC5}
+.cal .ev{font-size:13px;display:flex;flex-direction:column;gap:4px;justify-content:center}
+.cal .ev div{display:flex;gap:7px;align-items:center}
+.cal .ev i{width:7px;height:7px;border-radius:50%;flex:none}
+/* screen 2 */
+.crumb{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px}
+.crumb b{color:var(--ink);font-weight:600}
+.dhead{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center}
+.thumb{width:84px;height:84px;border-radius:18px;overflow:hidden}
+.dhead h2{font-size:24px;font-weight:800;letter-spacing:-.01em}
+.route{display:flex;gap:10px;align-items:center;color:#4A544F;margin-top:4px}
+.route svg{width:42px;height:10px}
+.stepper{display:grid;grid-template-columns:repeat(8,1fr);gap:0;position:relative;padding-top:6px}
+.stp{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;font-size:12.5px;color:var(--muted);position:relative}
+.stp .dot{width:30px;height:30px;border-radius:50%;background:var(--canvas);border:2px solid var(--line);display:grid;place-items:center;z-index:1;font-weight:700;font-size:12px;color:var(--muted)}
+.stp::before{content:"";position:absolute;top:15px;left:-50%;width:100%;height:2px;background:var(--line)}
+.stp:first-child::before{display:none}
+.stp.done .dot{background:var(--brand);border-color:var(--brand);color:#fff}
+.stp.done::before{background:var(--brand)}
+.stp.cur .dot{background:#fff;border-color:var(--brand-deep);color:var(--brand-deep);box-shadow:0 0 0 5px var(--brand-soft)}
+.stp.cur{color:var(--ink);font-weight:700}
+.stp small{display:block;font-weight:500;color:var(--muted);font-size:11.5px}
+.facts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.fact{background:var(--canvas);border-radius:14px;padding:12px 14px}
+.fact span{display:block;font-size:12px;color:var(--muted)} .fact b{font-size:15px}
+.blocker{display:flex;gap:12px;align-items:flex-start;background:var(--warn-soft);border-radius:14px;padding:12px 14px}
+.blocker .ic{width:32px;height:32px;border-radius:10px;background:#fff;display:grid;place-items:center;flex:none}
+.blocker .ic svg{width:17px;height:17px;stroke:var(--warn);fill:none;stroke-width:2}
+.tl{display:flex;flex-direction:column;gap:0}
+.tli{display:grid;grid-template-columns:22px 1fr;gap:12px;padding-bottom:16px;position:relative}
+.tli::before{content:"";position:absolute;left:10px;top:20px;bottom:0;width:2px;background:var(--line)}
+.tli:last-child::before{display:none}
+.tli .dt{width:22px;height:22px;border-radius:50%;background:var(--brand-soft);display:grid;place-items:center}
+.tli .dt i{width:8px;height:8px;border-radius:50%;background:var(--brand-deep)}
+.tli .when{font-size:12px;color:var(--muted)} .tli .what{font-size:13.5px}
+.doc{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.doc:first-of-type{border-top:0}
+.doc .fi{width:36px;height:40px;border-radius:8px;display:grid;place-items:center;font-size:10.5px;font-weight:800;color:#fff;flex:none}
+.doc .nm{font-weight:600;font-size:13.5px} .doc .sz{font-size:12px;color:var(--muted)}
+.ask{display:flex;gap:10px;align-items:center;border:1.5px dashed var(--line);border-radius:14px;padding:12px 14px;color:var(--muted)}
+/* screen 3 */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px;display:flex;gap:14px;align-items:center}
+.kpi .kic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;flex:none}
+.kpi .kic svg{width:21px;height:21px;fill:none;stroke-width:2}
+.kpi b{font-size:22px;display:block;line-height:1.2} .kpi span{font-size:12.5px;color:var(--muted)}
+.g2{display:grid;grid-template-columns:1.5fr 1fr;gap:20px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+.legend{display:flex;gap:14px;font-size:12.5px;color:var(--muted)} .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.hb{display:grid;grid-template-columns:96px 1fr 56px;gap:10px;align-items:center;font-size:13px;padding:5px 0}
+.hb .tr{height:10px;background:var(--canvas);border-radius:6px;overflow:hidden} .hb .tr i{display:block;height:100%;border-radius:6px}
+.hb .v{text-align:right;font-weight:600}
+.lotsel{display:flex;gap:8px}
+.lotsel span{padding:7px 14px;border-radius:11px;border:1px solid var(--line);background:var(--card);font-weight:600;font-size:13px;display:flex;gap:7px;align-items:center}
+.lotsel span.on{border-color:var(--p-dragon);background:var(--p-dragon-soft);color:var(--p-dragon)}
+.lotsel i{width:8px;height:8px;border-radius:50%}
+.stage{display:grid;grid-template-columns:120px 1fr 48px;gap:10px;align-items:center;font-size:13px;padding:4px 0}
+.stage .tr{height:8px;background:var(--canvas);border-radius:6px;overflow:hidden}.stage .tr i{display:block;height:100%;background:var(--p-dragon);border-radius:6px}
+.note{width:1240px;max-width:100%;background:#fff;border-radius:16px;padding:18px 22px;font-size:14px;color:#3B4540}
+.note ul{margin:8px 0 0 18px}
+.phoneRow{display:flex;gap:28px;align-items:flex-start;width:1240px}
+.phone{width:300px;border-radius:36px;background:#111;padding:10px;flex:none}
+.phone .scr{background:var(--canvas);border-radius:28px;overflow:hidden;height:600px;display:flex;flex-direction:column}
+.ptop{padding:16px 16px 10px;display:flex;align-items:center;gap:10px}
+.ptop .ham{width:34px;height:34px;border-radius:10px;background:#fff;border:1px solid var(--line);display:grid;place-items:center}
+.pbody{padding:0 14px;display:flex;flex-direction:column;gap:10px;flex:1}
+.pnav{display:grid;grid-template-columns:repeat(5,1fr);background:#fff;border-top:1px solid var(--line);padding:8px 4px 12px;font-size:10px;text-align:center;color:var(--muted)}
+.pnav div{display:flex;flex-direction:column;align-items:center;gap:3px}
+.pnav svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8}
+.pnav .on{color:var(--brand-deep);font-weight:700}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-open" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9h10M7 13h6"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></symbol>
+    <symbol id="i-factory" viewBox="0 0 24 24"><path d="M3 20V10l5 3V10l5 3V6h3l1 14z"/><path d="M3 20h18"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M4 10a12 12 0 0 1 16 0M7 13.5a7.5 7.5 0 0 1 10 0M10 17a3 3 0 0 1 4 0"/></symbol>
+    <symbol id="i-chip" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="i-msg" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+  </defs>
+</svg>
+
+<!-- ================= MÀN HÌNH 1 ================= -->
+<div class="caption"><b>1. Trang đầu: Hạng mục đang open</b><span>Giao diện của bạn (người cập nhật). Người xem sẽ không thấy khối “Việc của tôi hôm nay” và các nút sửa.</span></div>
+<div class="frame">
+  <aside class="side">
+    <div class="logo"><div class="mark">a</div><div><b>TSMT Desk</b><small>AVC · Ấn Độ</small></div></div>
+    <nav class="nav">
+      <div class="ni on"><svg><use href="#i-open"/></svg><span class="lbl">Hạng mục đang open</span><span class="c">7</span></div>
+      <div class="sub">
+        <div class="si on"><i style="background:var(--ink)"></i>Tất cả<span class="c">7</span></div>
+        <div class="si"><i style="background:var(--p-dragon)"></i>Dragon · Verizon<span class="c">2</span></div>
+        <div class="si"><i style="background:var(--p-mesh)"></i>Mesh V2 · T‑Mobile<span class="c">2</span></div>
+        <div class="si"><i style="background:var(--p-pts)"></i>Insert nut · PTS<span class="c">3</span></div>
+        <div class="si"><i style="background:var(--bad)"></i>Quá hạn<span class="c">3</span></div>
+      </div>
+      <div class="ni"><svg><use href="#i-truck"/></svg><span class="lbl">Shipment</span><svg class="chev"><use href="#i-right"/></svg></div>
+      <div class="ni"><svg><use href="#i-box"/></svg><span class="lbl">Xuất hàng cho khách</span><svg class="chev"><use href="#i-right"/></svg></div>
+      <div class="ni"><svg><use href="#i-factory"/></svg><span class="lbl">Sản xuất</span><svg class="chev"><use href="#i-right"/></svg></div>
+      <div class="ni"><svg><use href="#i-cal"/></svg><span class="lbl">Lịch</span></div>
+      <div class="ni"><svg><use href="#i-folder"/></svg><span class="lbl">Tài liệu</span><svg class="chev"><use href="#i-right"/></svg></div>
+      <div class="ni"><svg><use href="#i-chart"/></svg><span class="lbl">Tổng kết tháng</span></div>
+      <div class="sep">Chỉ bạn thấy</div>
+      <div class="ni"><svg><use href="#i-sun"/></svg><span class="lbl">Việc của tôi hôm nay</span><span class="c">5</span></div>
+      <div class="ni"><svg><use href="#i-edit"/></svg><span class="lbl">Cập nhật dữ liệu</span></div>
+    </nav>
+    <div class="sideFoot"><div class="av">MP</div><div><b style="font-size:13.5px">Mipu</b><div class="muted" style="font-size:12px">Người cập nhật</div></div></div>
+  </aside>
+  <section class="main">
+    <div class="topbar">
+      <div class="search"><svg><use href="#i-search"/></svg>Tìm lô hàng, PO, vấn đề…</div>
+      <div class="langs"><span>Tiếng Việt</span><span class="on">English</span><span>中文</span></div>
+      <span class="btn pri"><svg><use href="#i-plus"/></svg>Thêm cập nhật</span>
+    </div>
+
+    <div class="hero">
+      <div class="txt">
+        <h1>Good morning, Mipu<em>早安</em></h1>
+        <p>Thứ Sáu, 20/11. Có 3 việc quá hạn và 2 việc đến hạn trong tuần này. Họp tuần TSMT lúc 14:00 thứ Năm.</p>
+        <div class="stats">
+          <div class="stat"><b class="num">7</b><span>Đang open</span></div>
+          <div class="stat"><b class="num" style="color:var(--bad)">3</b><span>Quá hạn</span></div>
+          <div class="stat"><b class="num">2</b><span>Lô đang chạy</span></div>
+        </div>
+      </div>
+      <div class="art">
+        <!-- minh hoạ nhà máy (ảnh thật sẽ thay vào) -->
+        <svg viewBox="0 0 380 200" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+          <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#DDEFC8"/><stop offset="1" stop-color="#F7FBF2"/></linearGradient></defs>
+          <rect width="380" height="200" fill="url(#sky)"/>
+          <circle cx="300" cy="52" r="26" fill="#FFF3C9"/>
+          <path d="M40 170V110l40 22v-22l40 22v-22l40 22V80h28l8 90z" fill="#7AB83E"/>
+          <rect x="196" y="62" width="14" height="30" fill="#4F8A1E"/>
+          <path d="M210 170V118h130v52z" fill="#FFFFFF" stroke="#D5E6C2" stroke-width="2"/>
+          <rect x="226" y="132" width="22" height="16" rx="3" fill="#CFE5B6"/><rect x="258" y="132" width="22" height="16" rx="3" fill="#CFE5B6"/><rect x="290" y="132" width="22" height="16" rx="3" fill="#CFE5B6"/>
+          <text x="226" y="112" font-family="Noto Sans TC" font-size="15" font-weight="700" fill="#4F8A1E">智易科技</text>
+          <rect x="0" y="170" width="380" height="30" fill="#E3EDD8"/>
+          <g transform="translate(70 158)"><rect width="46" height="22" rx="4" fill="#2F6FD6"/><rect x="46" y="8" width="18" height="14" rx="3" fill="#2F6FD6"/><circle cx="12" cy="24" r="5" fill="#1B2420"/><circle cx="52" cy="24" r="5" fill="#1B2420"/></g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="projects">
+      <div class="proj">
+        <div class="cover" style="background:linear-gradient(135deg,#7AB83E,#4F8A1E)">
+          <svg viewBox="0 0 300 96" width="100%" height="96" preserveAspectRatio="xMidYMid slice"><g fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2"><path d="M0 70h60l20-20h60l20 20h140"/><path d="M0 40h90l20-20h190"/><circle cx="80" cy="50" r="4" fill="rgba(255,255,255,.6)"/><circle cx="110" cy="20" r="4" fill="rgba(255,255,255,.6)"/></g><rect x="200" y="24" width="64" height="48" rx="8" fill="rgba(255,255,255,.9)"/><rect x="212" y="36" width="40" height="24" rx="3" fill="#CFE5B6"/></svg>
+        </div>
+        <div class="body">
+          <div class="ttl"><div class="ic" style="background:var(--p-dragon)"><svg><use href="#i-chip"/></svg></div><div><b>Dragon</b> <span class="muted">· Verizon</span></div></div>
+          <div class="meta"><span class="chip dragon">LOT 2 · 6.4K</span><span class="chip gray">2 open</span></div>
+          <div class="muted" style="font-size:12.5px">Đã đóng gói 1,216 / 6,400</div>
+          <div class="bar"><i style="width:19%;background:var(--p-dragon)"></i></div>
+        </div>
+      </div>
+      <div class="proj">
+        <div class="cover" style="background:linear-gradient(135deg,#5B95EC,#2F6FD6)">
+          <svg viewBox="0 0 300 96" width="100%" height="96" preserveAspectRatio="xMidYMid slice"><g fill="none" stroke="rgba(255,255,255,.45)" stroke-width="3" stroke-linecap="round"><path d="M200 60a34 34 0 0 1 48 0"/><path d="M188 48a52 52 0 0 1 72 0"/><path d="M176 36a70 70 0 0 1 96 0"/></g><circle cx="224" cy="74" r="7" fill="#fff"/><rect x="40" y="30" width="34" height="50" rx="12" fill="rgba(255,255,255,.85)"/><rect x="90" y="40" width="28" height="40" rx="10" fill="rgba(255,255,255,.6)"/></svg>
+        </div>
+        <div class="body">
+          <div class="ttl"><div class="ic" style="background:var(--p-mesh)"><svg><use href="#i-wifi"/></svg></div><div><b>Mesh V2</b> <span class="muted">· T‑Mobile</span></div></div>
+          <div class="meta"><span class="chip mesh">PVT · 970 pcs</span><span class="chip bad">Trễ ETD 11 ngày</span></div>
+          <div class="muted" style="font-size:12.5px">Chờ xác nhận lô đã rời TSMT</div>
+          <div class="bar"><i style="width:60%;background:var(--p-mesh)"></i></div>
+        </div>
+      </div>
+      <div class="proj">
+        <div class="cover" style="background:linear-gradient(135deg,#F0A55A,#D9822B)">
+          <svg viewBox="0 0 300 96" width="100%" height="96" preserveAspectRatio="xMidYMid slice"><g fill="rgba(255,255,255,.85)"><polygon points="220,22 248,38 248,70 220,86 192,70 192,38"/></g><circle cx="220" cy="54" r="12" fill="#F0A55A"/><g fill="rgba(255,255,255,.4)"><polygon points="80,30 96,39 96,57 80,66 64,57 64,39"/><polygon points="130,44 142,51 142,65 130,72 118,65 118,51"/></g></svg>
+        </div>
+        <div class="body">
+          <div class="ttl"><div class="ic" style="background:var(--p-pts)"><svg><use href="#i-bolt"/></svg></div><div><b>Insert nut SUS303</b> <span class="muted">· PTS</span></div></div>
+          <div class="meta"><span class="chip pts">JIO</span><span class="chip bad">3 quá hạn</span></div>
+          <div class="muted" style="font-size:12.5px">Cần xác nhận lại tình trạng từ 15/9</div>
+          <div class="bar"><i style="width:35%;background:var(--p-pts)"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cols2">
+      <div class="card">
+        <h3>Hạng mục đang open <span class="more">Sắp xếp: hạn gần nhất</span></h3>
+        <div class="tabs"><span class="on">Tất cả 7</span><span>Quá hạn 3</span><span>Tuần này 2</span><span>Không có hạn 2</span></div>
+        <div class="oi"><div class="stripe" style="background:var(--p-mesh)"></div><div><div class="t">PVT CKD readiness and shipment</div><div class="l"><span class="d">16/11</span>Shipment delay: ETD 11/09, ETA 12/12. Chưa xác nhận lô đã đi.</div></div><div class="r"><span class="chip mesh">Mesh V2</span><span class="chip bad">ETD quá 11 ngày</span></div></div>
+        <div class="oi"><div class="stripe" style="background:var(--p-dragon)"></div><div><div class="t">Material CKD preparation, 3rd lot</div><div class="l"><span class="d">16/11</span>PO battery đã phát hành. PO nguyên liệu còn lại phải xong trước 20/11.</div></div><div class="r"><span class="chip dragon">Dragon</span><span class="chip warn">Hạn hôm nay</span></div></div>
+        <div class="oi"><div class="stripe" style="background:var(--p-dragon)"></div><div><div class="t">2nd lot 6.4K CKD: rework plan and DPR</div><div class="l"><span class="d">16/11</span>TSMT need to update the DPR ASAP.</div></div><div class="r"><span class="chip dragon">Dragon</span><span class="chip gray">Không có hạn</span></div></div>
+        <div class="oi"><div class="stripe" style="background:var(--p-pts)"></div><div><div class="t">ETA schedule of SUS303 insert nuts for MP (81K)</div><div class="l"><span class="d">15/9</span>3K đã ship sang Ấn Độ. Lô 20K dự kiến trước cuối tháng 9.</div></div><div class="r"><span class="chip pts">Insert nut</span><span class="chip bad">Quá hạn 66 ngày</span></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <div class="card mine">
+          <h3>Việc của tôi hôm nay <span class="ownerTag">Chỉ bạn thấy</span></h3>
+          <div class="task"><div class="bx"></div><div>Hỏi Aki: lô Mesh V2 970 pcs đã rời TSMT chưa?<div class="muted" style="font-size:12px">Xác nhận</div></div></div>
+          <div class="task"><div class="bx"></div><div>Nhắc ARC phát hành PO nguyên liệu LOT 3<div class="muted" style="font-size:12px">Hạn hôm nay</div></div></div>
+          <div class="task"><div class="bx"></div><div>Chưa có báo cáo QA ca B ngày 19/11<div class="muted" style="font-size:12px">Sản xuất</div></div></div>
+        </div>
+        <div class="card">
+          <h3>Sắp tới <span class="more">Mở lịch</span></h3>
+          <div class="cal">
+            <div class="day"><div class="dd today"><b>20</b><span>T6</span></div><div class="ev"><div><i style="background:var(--p-dragon)"></i>Hạn PO nguyên liệu LOT 3</div></div></div>
+            <div class="day"><div class="dd"><b>26</b><span>T5</span></div><div class="ev"><div><i style="background:var(--ink)"></i>Họp tuần TSMT</div></div></div>
+            <div class="day"><div class="dd"><b>27</b><span>T6</span></div><div class="ev"><div><i style="background:var(--p-dragon)"></i>Rework 1,661 pcs bắt đầu</div></div></div>
+            <div class="day"><div class="dd"><b>02</b><span>T4</span></div><div class="ev"><div><i style="background:var(--p-dragon)"></i>Ship 3,200 pcs cho Verizon</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ================= MÀN HÌNH 2 ================= -->
+<div class="caption"><b>2. Chi tiết một lô hàng</b><span>Bấm vào một lô trong Shipment sẽ mở trang này. Người xem thấy ô “Hỏi Mipu” thay cho các nút sửa.</span></div>
+<div class="frame">
+  <aside class="side">
+    <div class="logo"><div class="mark">a</div><div><b>TSMT Desk</b><small>AVC · Ấn Độ</small></div></div>
+    <nav class="nav">
+      <div class="ni"><svg><use href="#i-open"/></svg><span class="lbl">Hạng mục đang open</span><span class="c">7</span></div>
+      <div class="ni on"><svg><use href="#i-truck"/></svg><span class="lbl">Shipment</span><svg class="chev"><use href="#i-down"/></svg></div>
+      <div class="sub">
+        <div class="si"><i style="background:var(--brand)"></i>Đang vận chuyển<span class="c">1</span></div>
+        <div class="si on"><i style="background:var(--brand)"></i>Nguyên liệu → TSMT<span class="c">2</span></div>
+        <div class="si"><i style="background:var(--slate)"></i>Máy móc / fixture<span class="c">0</span></div>
+        <div class="si"><i style="background:var(--slate)"></i>Mẫu<span class="c">1</span></div>
+        <div class="si"><i style="background:var(--slate)"></i>Hàng trả về<span class="c">1</span></div>
+        <div class="si"><i style="background:var(--line)"></i>Đã hoàn thành<span class="c">1</span></div>
+      </div>
+      <div class="ni"><svg><use href="#i-box"/></svg><span class="lbl">Xuất hàng cho khách</span><svg class="chev"><use href="#i-right"/></svg></div>
+      <div class="ni"><svg><use href="#i-factory"/></svg><span class="lbl">Sản xuất</span><svg class="chev"><use href="#i-right"/></svg></div>
+      <div class="ni"><svg><use href="#i-cal"/></svg><span class="lbl">Lịch</span></div>
+      <div class="ni"><svg><use href="#i-folder"/></svg><span class="lbl">Tài liệu</span><svg class="chev"><use href="#i-right"/></svg></div>
+      <div class="ni"><svg><use href="#i-chart"/></svg><span class="lbl">Tổng kết tháng</span></div>
+    </nav>
+    <div class="sideFoot"><div class="av">MP</div><div><b style="font-size:13.5px">Mipu</b><div class="muted" style="font-size:12px">Người cập nhật</div></div></div>
+  </aside>
+  <section class="main">
+    <div class="crumb">Shipment <svg width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><use href="#i-right"/></svg> Nguyên liệu → TSMT <svg width="12" height="12" stroke="currentColor" fill="none" stroke-width="2"><use href="#i-right"/></svg> <b>LOT 3 battery</b></div>
+    <div class="dhead">
+      <div class="thumb">
+        <svg viewBox="0 0 84 84" width="84" height="84"><rect width="84" height="84" fill="#EAF4DF"/><rect x="22" y="18" width="40" height="52" rx="8" fill="#7AB83E"/><rect x="34" y="12" width="16" height="8" rx="3" fill="#4F8A1E"/><path d="M45 30l-9 14h8l-3 12 10-16h-8z" fill="#fff"/></svg>
+      </div>
+      <div>
+        <div style="display:flex;gap:8px;margin-bottom:6px"><span class="chip dragon">Dragon · Verizon</span><span class="chip gray">LOT 3 B&amp;S</span><span class="chip gray">Nguyên liệu · Assembly</span></div>
+        <h2>Battery, 12,606 pcs</h2>
+        <div class="route">Nhà cung cấp <svg viewBox="0 0 42 10"><path d="M0 5h38M33 1l5 4-5 4" stroke="#7C88A0" fill="none" stroke-width="1.6"/></svg> ARC Đài Loan <svg viewBox="0 0 42 10"><path d="M0 5h38M33 1l5 4-5 4" stroke="#7C88A0" fill="none" stroke-width="1.6"/></svg> TSMT Ấn Độ</div>
+      </div>
+      <div style="display:flex;gap:8px"><span class="btn"><svg><use href="#i-edit"/></svg>Sửa</span><span class="btn pri">Sang bước tiếp: Hàng sẵn sàng</span></div>
+    </div>
+
+    <div class="card">
+      <div class="stepper">
+        <div class="stp done"><div class="dot">✓</div>PO đã tạo<small>16/11</small></div>
+        <div class="stp cur"><div class="dot">2</div>Hàng sẵn sàng<small>Chờ ARC báo</small></div>
+        <div class="stp"><div class="dot">3</div>Invoice / PKL</div>
+        <div class="stp"><div class="dot">4</div>Booking</div>
+        <div class="stp"><div class="dot">5</div>Đã xuất (ETD)</div>
+        <div class="stp"><div class="dot">6</div>Đã tới (ETA)</div>
+        <div class="stp"><div class="dot">7</div>Thông quan</div>
+        <div class="stp"><div class="dot">8</div>Đã nhận</div>
+      </div>
+    </div>
+
+    <div class="cols2">
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <div class="card">
+          <h3>Thông tin lô hàng</h3>
+          <div class="facts">
+            <div class="fact"><span>Số lượng</span><b class="num">12,606 pcs</b></div>
+            <div class="fact"><span>Hình thức</span><b>Buy &amp; Sale</b></div>
+            <div class="fact"><span>Người chịu chi phí</span><b>Chưa có</b></div>
+            <div class="fact"><span>Phụ trách</span><b>ARC: Vicky, Iris</b></div>
+            <div class="fact"><span>Số PO</span><b>Đã phát hành</b></div>
+            <div class="fact"><span>Invoice</span><b class="muted">—</b></div>
+            <div class="fact"><span>ETD dự kiến / thực tế</span><b class="muted">— / —</b></div>
+            <div class="fact"><span>ETA dự kiến / thực tế</span><b class="muted">— / —</b></div>
+          </div>
+        </div>
+        <div class="blocker"><div class="ic"><svg><use href="#i-alert"/></svg></div><div><b>Đang chờ xác nhận</b> <span class="muted">· mở 4 ngày</span><div style="font-size:13.5px;margin-top:2px">ARC xác nhận ngày hàng sẵn sàng và ngày ship từ nhà cung cấp.</div></div></div>
+        <div class="card">
+          <h3>Nhật ký cập nhật</h3>
+          <div class="tl">
+            <div class="tli"><div class="dt"><i></i></div><div><div class="when">16/11 · Mipu</div><div class="what">PO for battery released. Waiting for ARC ready date.</div></div></div>
+            <div class="tli"><div class="dt"><i></i></div><div><div class="when">29/10 · Mipu</div><div class="what">Battery qty confirmed: 12,606 pcs (3rd and 4th lot).</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <div class="card">
+          <h3>Tài liệu đính kèm <span class="more">+ Thêm</span></h3>
+          <div class="doc"><div class="fi" style="background:#1F7A45">XLS</div><div><div class="nm">PO_Battery_LOT3.xlsx</div><div class="sz">16/11 · 48 KB</div></div></div>
+          <div class="doc"><div class="fi" style="background:#C2372E">PDF</div><div><div class="nm">Battery_spec_12606.pdf</div><div class="sz">29/10 · 1.2 MB</div></div></div>
+          <div class="doc"><div class="fi" style="background:#7C88A0">IMG</div><div><div class="nm">ARC_reply_email.png</div><div class="sz">16/11 · 220 KB</div></div></div>
+        </div>
+        <div class="card">
+          <h3>Người xem sẽ thấy</h3>
+          <div class="ask"><svg width="18" height="18" stroke="currentColor" fill="none" stroke-width="2"><use href="#i-msg"/></svg>Hỏi Mipu về lô hàng này…</div>
+          <div class="muted" style="font-size:12.5px;margin-top:8px">Ô hỏi đáp này làm ở giai đoạn sau (GitHub Pages chưa lưu được comment).</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ================= MÀN HÌNH 3 ================= -->
+<div class="caption"><b>3. Sản xuất</b><span>Chọn lô ở trên, bên dưới là các biểu đồ của riêng lô đó.</span></div>
+<div class="frame">
+  <aside class="side">
+    <div class="logo"><div class="mark">a</div><div><b>TSMT Desk</b><small>AVC · Ấn Độ</small></div></div>
+    <nav class="nav">
+      <div class="ni"><svg><use href="#i-open"/></svg><span class="lbl">Hạng mục đang open</span><span class="c">7</span></div>
+      <div class="ni"><svg><use href="#i-truck"/></svg><span class="lbl">Shipment</span><svg class="chev"><use href="#i-right"/></svg></div>
+      <div class="ni"><svg><use href="#i-box"/></svg><span class="lbl">Xuất hàng cho khách</span><svg class="chev"><use href="#i-right"/></svg></div>
+      <div class="ni on"><svg><use href="#i-factory"/></svg><span class="lbl">Sản xuất</span><svg class="chev"><use href="#i-down"/></svg></div>
+      <div class="sub">
+        <div class="si on"><i style="background:var(--brand)"></i>Tổng quan &amp; biểu đồ</div>
+        <div class="si"><i style="background:var(--brand)"></i>Báo cáo QA</div>
+        <div class="si"><i style="background:var(--brand)"></i>Kế hoạch sản xuất</div>
+      </div>
+      <div class="ni"><svg><use href="#i-cal"/></svg><span class="lbl">Lịch</span></div>
+      <div class="ni"><svg><use href="#i-folder"/></svg><span class="lbl">Tài liệu</span><svg class="chev"><use href="#i-right"/></svg></div>
+      <div class="ni"><svg><use href="#i-chart"/></svg><span class="lbl">Tổng kết tháng</span></div>
+    </nav>
+    <div class="sideFoot"><div class="av">MP</div><div><b style="font-size:13.5px">Mipu</b><div class="muted" style="font-size:12px">Người cập nhật</div></div></div>
+  </aside>
+  <section class="main">
+    <div class="topbar">
+      <div class="lotsel"><span class="on"><i style="background:var(--p-dragon)"></i>Dragon · LOT 2 6.4K</span><span><i style="background:var(--p-mesh)"></i>Mesh V2 · PVT</span></div>
+      <div class="langs"><span>Tiếng Việt</span><span class="on">English</span><span>中文</span></div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="kic" style="background:var(--p-dragon-soft)"><svg stroke="var(--p-dragon)"><use href="#i-box"/></svg></div><div><b class="num">1,293</b><span>Đã đóng gói (QA 18/11)</span></div></div>
+      <div class="kpi"><div class="kic" style="background:var(--warn-soft)"><svg stroke="var(--warn)"><use href="#i-alert"/></svg></div><div><b class="num">92.77%</b><span>Yield 1A thấp nhất · CFT2</span></div></div>
+      <div class="kpi"><div class="kic" style="background:var(--bad-soft)"><svg stroke="var(--bad)"><use href="#i-chip"/></svg></div><div><b class="num">1,662</b><span>Đang hold (SW cũ)</span></div></div>
+      <div class="kpi"><div class="kic" style="background:var(--ok-soft)"><svg stroke="var(--ok)"><use href="#i-cal"/></svg></div><div><b class="num">04/12</b><span>Dự kiến xong cả lô</span></div></div>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <h3>Kế hoạch so với thực tế · Assembly <span class="more">Theo ngày</span></h3>
+        <div class="legend"><span><i style="background:#D8E8C6"></i>Kế hoạch</span><span><i style="background:var(--p-dragon)"></i>Thực tế</span></div>
+        <svg viewBox="0 0 560 220" width="100%" height="220" style="margin-top:8px">
+          <g stroke="#EEF1EC"><line x1="40" y1="20" x2="550" y2="20"/><line x1="40" y1="75" x2="550" y2="75"/><line x1="40" y1="130" x2="550" y2="130"/><line x1="40" y1="185" x2="550" y2="185"/></g>
+          <g font-size="11" fill="#6B7685" text-anchor="end" font-family="Plus Jakarta Sans"><text x="34" y="24">450</text><text x="34" y="79">300</text><text x="34" y="134">150</text><text x="34" y="189">0</text></g>
+          <!-- scale: 0 -> y185, 450 -> y20 ; 1pc = 0.3667px -->
+          <g>
+            <rect x="58" y="57" width="18" height="128" rx="4" fill="#D8E8C6"/><rect x="78" y="86" width="18" height="99" rx="4" fill="#4F8A1E"/>
+            <rect x="120" y="57" width="18" height="128" rx="4" fill="#D8E8C6"/><rect x="140" y="74" width="18" height="111" rx="4" fill="#4F8A1E"/>
+            <rect x="182" y="57" width="18" height="128" rx="4" fill="#D8E8C6"/><rect x="202" y="85" width="18" height="100" rx="4" fill="#4F8A1E"/>
+            <rect x="244" y="57" width="18" height="128" rx="4" fill="#D8E8C6"/><rect x="264" y="148" width="18" height="37" rx="4" fill="#4F8A1E"/>
+            <rect x="306" y="57" width="18" height="128" rx="4" fill="#D8E8C6"/><rect x="326" y="91" width="18" height="94" rx="4" fill="#4F8A1E"/>
+            <rect x="368" y="57" width="18" height="128" rx="4" fill="#D8E8C6"/><rect x="388" y="183" width="18" height="2" rx="1" fill="#D64545"/>
+            <rect x="430" y="57" width="18" height="128" rx="4" fill="#D8E8C6"/><rect x="450" y="183" width="18" height="2" rx="1" fill="#D64545"/>
+            <rect x="492" y="57" width="18" height="128" rx="4" fill="#D8E8C6"/><rect x="512" y="183" width="18" height="2" rx="1" fill="#D64545"/>
+          </g>
+          <g font-size="11" fill="#6B7685" text-anchor="middle" font-family="Plus Jakarta Sans"><text x="77" y="204">2/11</text><text x="139" y="204">3/11</text><text x="201" y="204">4/11</text><text x="263" y="204">11/11</text><text x="325" y="204">12/11</text><text x="387" y="204">13/11</text><text x="449" y="204">14/11</text><text x="511" y="204">17/11</text></g>
+          <text x="449" y="172" font-size="11" fill="#D64545" text-anchor="middle" font-family="Plus Jakarta Sans">chưa có số liệu</text>
+        </svg>
+      </div>
+      <div class="card">
+        <h3>Tiến độ lô theo công đoạn</h3>
+        <div style="display:flex;gap:18px;align-items:center">
+          <svg viewBox="0 0 120 120" width="120" height="120">
+            <circle cx="60" cy="60" r="48" fill="none" stroke="#EEF1EC" stroke-width="12"/>
+            <circle cx="60" cy="60" r="48" fill="none" stroke="#4F8A1E" stroke-width="12" stroke-linecap="round" stroke-dasharray="57.3 301.6" transform="rotate(-90 60 60)"/>
+            <text x="60" y="58" text-anchor="middle" font-size="22" font-weight="800" fill="#1B2420" font-family="Plus Jakarta Sans">19%</text>
+            <text x="60" y="76" text-anchor="middle" font-size="11" fill="#6B7685" font-family="Plus Jakarta Sans">đã đóng gói</text>
+          </svg>
+          <div style="flex:1">
+            <div class="stage"><span>SMT</span><div class="tr"><i style="width:66%"></i></div><span class="num">66%</span></div>
+            <div class="stage"><span>DIP</span><div class="tr"><i style="width:66%"></i></div><span class="num">66%</span></div>
+            <div class="stage"><span>BLT</span><div class="tr"><i style="width:55%"></i></div><span class="num">55%</span></div>
+            <div class="stage"><span>Assembly</span><div class="tr"><i style="width:32%"></i></div><span class="num">32%</span></div>
+            <div class="stage"><span>CFT</span><div class="tr"><i style="width:30%"></i></div><span class="num">30%</span></div>
+            <div class="stage"><span>Packing</span><div class="tr"><i style="width:19%"></i></div><span class="num">19%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="g2">
+      <div class="card">
+        <h3>Yield 1A theo trạm · QA 18/11 <span class="more">Mốc cảnh báo 95%</span></h3>
+        <div class="hb"><span>MB 5G LTE</span><div class="tr"><i style="width:98.24%;background:var(--ok)"></i></div><span class="v num">98.24%</span></div>
+        <div class="hb"><span>MB CPT1</span><div class="tr"><i style="width:97.04%;background:var(--ok)"></i></div><span class="v num">97.04%</span></div>
+        <div class="hb"><span>CFT1</span><div class="tr"><i style="width:95.12%;background:var(--ok)"></i></div><span class="v num">95.12%</span></div>
+        <div class="hb"><span>APT2</span><div class="tr"><i style="width:95.04%;background:var(--ok)"></i></div><span class="v num">95.04%</span></div>
+        <div class="hb"><span>CFT2</span><div class="tr"><i style="width:92.77%;background:var(--warn)"></i></div><span class="v num" style="color:var(--warn)">92.77%</span></div>
+        <div class="muted" style="font-size:12px;margin-top:6px">Thanh bắt đầu từ 0%. Trạm dưới 95% đổi sang màu cam.</div>
+      </div>
+      <div class="card">
+        <h3>Lô hàng theo trạng thái</h3>
+        <div style="display:flex;gap:18px;align-items:center">
+          <svg viewBox="0 0 120 120" width="120" height="120">
+            <g transform="rotate(-90 60 60)" fill="none" stroke-width="14">
+              <circle cx="60" cy="60" r="44" stroke="#C27C0E" stroke-dasharray="110.6 276.5"/>
+              <circle cx="60" cy="60" r="44" stroke="#7AB83E" stroke-dasharray="55.3 276.5" stroke-dashoffset="-110.6"/>
+              <circle cx="60" cy="60" r="44" stroke="#2F6FD6" stroke-dasharray="55.3 276.5" stroke-dashoffset="-165.9"/>
+              <circle cx="60" cy="60" r="44" stroke="#C9D1CB" stroke-dasharray="55.3 276.5" stroke-dashoffset="-221.2"/>
+            </g>
+            <text x="60" y="66" text-anchor="middle" font-size="22" font-weight="800" fill="#1B2420" font-family="Plus Jakarta Sans">5</text>
+          </svg>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+            <div><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#C27C0E;margin-right:7px"></i>Chờ PO / xác nhận · 2</div>
+            <div><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#7AB83E;margin-right:7px"></i>Đã có PO · 1</div>
+            <div><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#2F6FD6;margin-right:7px"></i>Đang vận chuyển · 1</div>
+            <div><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#C9D1CB;margin-right:7px"></i>Đã nhận · 1</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ================= ĐIỆN THOẠI ================= -->
+<div class="caption"><b>4. Trên điện thoại</b><span>Menu chuyển xuống thanh dưới cùng, các khối xếp thành một cột.</span></div>
+<div class="phoneRow">
+  <div class="phone"><div class="scr">
+    <div class="ptop"><div class="ham"><svg width="18" height="18" stroke="#1B2420" fill="none" stroke-width="2"><path d="M3 6h12M3 9h12M3 12h12"/></svg></div><b>TSMT Desk</b><div class="av" style="margin-left:auto;width:30px;height:30px;font-size:11px">MP</div></div>
+    <div class="pbody">
+      <div class="hero" style="grid-template-columns:1fr;min-height:0"><div class="txt" style="padding:16px"><h1 style="font-size:20px">Good morning<em>早安</em></h1><div class="stats"><div class="stat" style="padding:6px 10px"><b style="font-size:16px">7</b><span>Open</span></div><div class="stat" style="padding:6px 10px"><b style="font-size:16px;color:var(--bad)">3</b><span>Quá hạn</span></div></div></div></div>
+      <div class="card" style="padding:12px 14px"><div class="oi" style="padding:6px 0;gap:10px"><div class="stripe" style="background:var(--p-mesh)"></div><div><div class="t" style="font-size:13px">PVT CKD readiness</div><div class="l" style="font-size:12px">ETD 11/09 chưa xác nhận</div></div><div class="r"><span class="chip bad">Trễ</span></div></div></div>
+      <div class="card" style="padding:12px 14px"><div class="oi" style="padding:6px 0;gap:10px"><div class="stripe" style="background:var(--p-dragon)"></div><div><div class="t" style="font-size:13px">Material CKD LOT 3</div><div class="l" style="font-size:12px">PO trước 20/11</div></div><div class="r"><span class="chip warn">Hôm nay</span></div></div></div>
+      <div class="card" style="padding:12px 14px"><div class="oi" style="padding:6px 0;gap:10px"><div class="stripe" style="background:var(--p-pts)"></div><div><div class="t" style="font-size:13px">ETA insert nut 81K</div><div class="l" style="font-size:12px">Cần xác nhận lại</div></div><div class="r"><span class="chip bad">66 ngày</span></div></div></div>
+    </div>
+    <div class="pnav"><div class="on"><svg><use href="#i-open"/></svg>Open</div><div><svg><use href="#i-truck"/></svg>Shipment</div><div><svg><use href="#i-factory"/></svg>Sản xuất</div><div><svg><use href="#i-cal"/></svg>Lịch</div><div><svg><use href="#i-folder"/></svg>Tài liệu</div></div>
+  </div></div>
+  <div class="note">
+    <b>Ghi chú về bản phác thảo</b>
+    <ul>
+      <li>Hình nhà máy, sản phẩm và ảnh bìa dự án hiện là hình vẽ minh hoạ. Bản thật sẽ thay bằng ảnh bạn gửi hoặc ảnh miễn phí bản quyền.</li>
+      <li>Số liệu lấy từ biên bản 10.29, DPR 12/11 và báo cáo QA 18/11 để bạn dễ hình dung.</li>
+      <li>Màu xanh lá lấy từ ảnh gian hàng Arcadyan. Mỗi dự án có một màu riêng: Dragon xanh lá, Mesh V2 xanh dương, Insert nut cam.</li>
+      <li>Đây là ảnh tĩnh để duyệt giao diện, chưa bấm được.</li>
+    </ul>
+  </div>
+</div>
+
+</body>
+</html>
